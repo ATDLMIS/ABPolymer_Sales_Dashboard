@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .mainHeading {
+    @apply text-text1 font-semibold;
+  }
+  .subHeading {
+  }
+  .btn-primary1 {
+  }
+  .btn-secondary {
+  }
+  .btn-primary1-disable {
+  }
+  .btn-secondary-disable {
+  }
+}

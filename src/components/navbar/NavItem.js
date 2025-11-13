@@ -1,300 +1,240 @@
 'use client';
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import { BiQrScan } from 'react-icons/bi';
-import { MdOutlineEqualizer } from 'react-icons/md';
-import { TiFlowParallel } from 'react-icons/ti';
-import { FaArrowRightLong } from 'react-icons/fa6';
-import {
-  Accordion,
-  AccordionItem,
-  AccordionItemHeading,
-  AccordionItemButton,
-  AccordionItemPanel,
-} from 'react-accessible-accordion';
-import useGetData from '@/utils/useGetData';
+import { 
+  Home, 
+  ChevronRight,
+  Settings,
+  Users,
+  MapPin,
+  Package,
+  Truck,
+  FileText,
+  DollarSign,
+  ShoppingCart,
+  CheckSquare,
+  AlertCircle,
+  BarChart3,
+  Calendar,
+  Building2,
+  BookOpen,
+  Target,
+  Map,
+  Menu,
+  Briefcase,
+  TrendingUp,
+  Receipt,
+  Archive
+} from 'lucide-react';
+import Image from 'next/image';
+import Axios from '@/utils/axios';
 
 const NavItem = ({ session }) => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [expandedSection, setExpandedSection] = useState(null);
+  const [isHovering, setIsHovering] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [displayLink, setDisplayLink] = useState([]);
   const [userPermission, setUserPermission] = useState([]);
 
-    process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-    
-  const { status, data } = useGetData(
-    `?action=get_UserMenuPermissions&UserID=${session.user.id}`
-  );
-
   useEffect(() => {
-    if (data.length) {
-      const { permissions } = data[0];
-      setUserPermission(permissions);
-    }
-  }, [data]);
+    const checkMobile = () => {
+      const mobile = window.innerWidth < 1024;
+      setIsMobile(mobile);
+      setIsCollapsed(mobile);
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
-  let updatedLink = [
+  const getUserMenuPermission=async() => {
+    if (session?.user?.id) {
+         const res = await Axios.get(`?action=get_UserMenuPermissions&UserID=${session.user.id}`);
+          if (res?.data.length && res?.data[0].permissions) {
+            setUserPermission(res?.data[0].permissions);
+          }
+        }
+  }
+
+  // Fetch user permissions
+  useEffect(() => {
+    getUserMenuPermission();
+  }, [session]);
+
+  const menuItems = [
     {
       name: 'Home',
       displayName: 'Home',
+      icon: Home,
       href: '/dashboard/',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Security & Setting',
       displayName: 'Security & Setting',
-      status: 'accordion',
-      internalLinks: [
-        {
-          name: 'Dashboard',
-          displayName: 'Dashboard',
-          href: '/dashboard/',
-          status: 'main',
-        },
-        {
-          name: 'Notifications',
-          displayName: 'Notifications',
-          href: '/dashboard/notifications',
-          status: 'main',
-        },
-        {
-          name: 'User-Employee registration',
-          displayName: 'User-Employee registration',
-          href: '/dashboard/user-employee',
-        },
-        {
-          name: 'User Role',
-          displayName: 'User Role',
-          href: '/dashboard/',
-        },
-        {
-          name: 'Menu Entry',
-          displayName: 'Menu Entry',
-          href: '/dashboard/',
-        },
-        {
-          name: 'User Role Mapping',
-          displayName: 'User Role Mapping',
-          href: '/dashboard/',
-        },
-        {
-          name: 'Role Menu Privileges',
-          displayName: 'Role Menu Privileges',
-          href: '/dashboard/',
-        },
-        {
-          name: 'Approvals',
-          displayName: 'Approvals',
-          href: '/dashboard/',
-        },
-        {
-          name: 'Approvals Menu',
-          displayName: 'Approvals Menu',
-          href: '/dashboard/',
-        },
-        {
-          name: 'User Approvals Privileges',
-          displayName: 'User Approvals Privileges',
-          href: '/dashboard/',
-        },
-      ],
+      icon: Settings,
+      type: 'section',
+      items: [
+        { name: 'Dashboard', displayName: 'Dashboard', icon: BarChart3, href: '/dashboard/' },
+        { name: 'Notifications', displayName: 'Notifications', icon: AlertCircle, href: '/dashboard/notifications' },
+        { name: 'User-Employee registration', displayName: 'User-Employee registration', icon: Users, href: '/dashboard/user-employee' },
+        // { name: 'User Role', displayName: 'User Role', icon: Users, href: '/dashboard/' },
+        // { name: 'Menu Entry', displayName: 'Menu Entry', icon: FileText, href: '/dashboard/' },
+        // { name: 'User Role Mapping', displayName: 'User Role Mapping', icon: Users, href: '/dashboard/' },
+        // { name: 'Role Menu Privileges', displayName: 'Role Menu Privileges', icon: Settings, href: '/dashboard/' },
+        // { name: 'Approvals', displayName: 'Approvals', icon: CheckSquare, href: '/dashboard/' },
+        // { name: 'Approvals Menu', displayName: 'Approvals Menu', icon: FileText, href: '/dashboard/' },
+        // { name: 'User Approvals Privileges', displayName: 'User Approvals Privileges', icon: CheckSquare, href: '/dashboard/' },
+      ]
     },
     {
       name: 'Master Setup',
       displayName: 'Master Setup',
-      status: 'accordion',
-      internalLinks: [
-        {
-          name: 'Financial Year',
-          displayName: 'Financial Year',
-          href: '/dashboard/financial-year',
-        },
-        {
-          name: 'Designation',
-          displayName: 'Designation',
-          href: '/dashboard/designation',
-        },
-        {
-          name: 'Region Type',
-          displayName: 'Region Type',
-          href: '/dashboard/region-type',
-        },
-        {
-          name: 'Region Area',
-          displayName: 'Region Area',
-          href: '/dashboard/region-area',
-        },
-        // {
-        //   name: 'Institution Type',
-        //   displayName: 'Institution Type',
-        //   href: '/dashboard/institution-type',
-        // },
-        // {
-        //   name: 'Institution',
-        //   displayName: 'Institution',
-        //   href: '/dashboard/institution',
-        // },
-        {
-          name: 'Book category',
-          displayName: 'Product Type',
-          href: '/dashboard/book-category',
-        },
-        {
-          name: 'Books Products',
-          displayName: 'Product Name',
-          href: '/dashboard/book-management',
-        },
-        {
-          name: 'Party Management',
-          displayName: 'Party Management',
-          href: '/dashboard/party-management',
-        },
-        {
-          name: 'Marketing Expense',
-          displayName: 'Marketing Expense',
-          href: '/dashboard/ta-da',
-        },
-        {
-          name: 'Purpose category',
-          displayName: 'Marketing Activities',
-          href: '/dashboard/purpose-management',
-        },
-        {
-          name: 'Employee VS Region Mapping',
-          displayName: 'Employee VS Region Mapping',
-          href: '/dashboard/mapping',
-        },
-        // {
-        //   name: 'Mapping V2',
-        //   href: '/dashboard/mappingv2',
-        // },
-        // {
-        //   name: 'Class Information',
-        //   href: '/dashboard/class-management',
-        // },
-        // {
-        //   name: 'Subject Information',
-        //   href: '/dashboard/subject-management',
-        // },
-      ],
+      icon: Briefcase,
+      type: 'section',
+      items: [
+        { name: 'Financial Year', displayName: 'Financial Year', icon: Calendar, href: '/dashboard/financial-year' },
+        { name: 'Designation', displayName: 'Designation', icon: Users, href: '/dashboard/designation' },
+        { name: 'Region Type', displayName: 'Region Type', icon: MapPin, href: '/dashboard/region-type' },
+        { name: 'Region Area', displayName: 'Region Area', icon: Map, href: '/dashboard/region-area' },
+        { name: 'Institution Type', displayName: 'Product Type', icon: Building2, href: '/dashboard/institution-type' },
+        // { name: 'Institution', displayName: 'Institution', icon: Building2, href: '/dashboard/institution' },
+        { name: 'Book category', displayName: 'Product category', icon: Package, href: '/dashboard/book-category' },
+        { name: 'Books Products', displayName: 'Product Name', icon: BookOpen, href: '/dashboard/book-management' },
+        { name: 'Party Management', displayName: 'Party Management', icon: Building2, href: '/dashboard/party-management' },
+        { name: 'Marketing Expense', displayName: 'Marketing Expense', icon: DollarSign, href: '/dashboard/ta-da' },
+        { name: 'Purpose category', displayName: 'Marketing Activities', icon: Target, href: '/dashboard/purpose-management' },
+        { name: 'Employee VS Region Mapping', displayName: 'Employee VS Region Mapping', icon: Map, href: '/dashboard/mapping' },
+      ]
     },
     {
       name: 'Visit Plan Requisition',
       displayName: 'Visit Plan Requisition',
+      icon: Calendar,
       href: '/dashboard/visit-plan',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Visit plan approval',
       displayName: 'Visit plan approval',
+      icon: CheckSquare,
       href: '/dashboard/visit-approval',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Visit Entry',
       displayName: 'Visit Entry',
+      icon: FileText,
       href: '/dashboard/visit-entry',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Visit Entry Approval',
       displayName: 'Mkt. Exp. Approval',
+      icon: TrendingUp,
       href: '/dashboard/visit-approval-inital',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Product Receipt',
       displayName: 'Product Receipt',
+      icon: Archive,
       href: '/dashboard/product-receipt',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Sales orders',
       displayName: 'Sales orders',
+      icon: ShoppingCart,
       href: '/dashboard/sales-order',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Sales order approval process',
-      displayName: 'Sales order approval process',
+      displayName: 'Sales order approval',
+      icon: CheckSquare,
       href: '/dashboard/sales-order-approval',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Delivery Challan',
       displayName: 'Delivery Challan',
+      icon: Truck,
       href: '/dashboard/delivery-challan',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Invoice/Bill',
       displayName: 'Invoice/Bill',
+      icon: Receipt,
       href: '/dashboard/invoice-bill',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Money Receipt',
       displayName: 'Collection',
+      icon: DollarSign,
       href: '/dashboard/money-receipt',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Money receipt Approval',
       displayName: 'Collection Approval',
+      icon: CheckSquare,
       href: '/dashboard/money-receipt-approval',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'BD Expense Requisition',
       displayName: 'BD Expense Requisition',
+      icon: FileText,
       href: '/dashboard/expense-requisition',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'BD Expense Approval',
       displayName: 'BD Expense Approval',
+      icon: CheckSquare,
       href: '/dashboard/expense-approval',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Product Return',
       displayName: 'Product Return',
+      icon: Package,
       href: '/dashboard/sales-return',
-      status: 'main',
+      type: 'main'
     },
     {
       name: 'Damage product/Book',
       displayName: 'Damage product/Book',
+      icon: AlertCircle,
       href: '/dashboard/expense-requisition',
-      status: 'main',
+      type: 'main'
     },
-    // {
-    //   name: 'Specimen Order', BD Expense Requisition
-    //   href: '/dashboard/specimen',
-    //   status: 'main',
-    // },
-    // {
-    //   name: 'Specimen Approval',
-    //   href: '/dashboard/',
-    //   status: 'main',
-    // },
+    {
+      name: 'Stock Report',
+      displayName: 'Stock Report',
+      icon: BarChart3,
+      href: '/dashboard/stock-report',
+      type: 'main'
+    }
   ];
 
+  // Filter links by permissions
   const filterLinksByPermissions = (links, permissions) => {
     return links
       .map(link => {
-        // Check if it has internal links
-        if (link.internalLinks) {
-          const filteredInternalLinks = link.internalLinks.filter(
-            internalLink =>
-              permissions.some(permission =>
-                internalLink.name
-                  .toLowerCase()
-                  .includes(permission.toLowerCase())
-              )
+        if (link.items) {
+          const filteredItems = link.items.filter(item =>
+            permissions.some(permission =>
+              item.name.toLowerCase().includes(permission.toLowerCase())
+            )
           );
 
-          // Include the section only if it has filtered internal links
-          if (filteredInternalLinks.length > 0) {
-            return { ...link, internalLinks: filteredInternalLinks };
+          if (filteredItems.length > 0) {
+            return { ...link, items: filteredItems };
           }
           return null;
         } else if (
@@ -311,199 +251,153 @@ const NavItem = ({ session }) => {
 
   useEffect(() => {
     if (userPermission.length) {
-      const filteredPermission = filterLinksByPermissions(
-        updatedLink,
-        userPermission
-      );
-      setDisplayLink(filteredPermission);
+      const filteredLinks = filterLinksByPermissions(menuItems, userPermission);
+      setDisplayLink(filteredLinks);
+    } else {
+      // If no permissions loaded, show all menu items
+      setDisplayLink(menuItems);
     }
   }, [userPermission]);
 
-  let allLinks = [
-    {
-      section: 'Basic',
-      icon: TiFlowParallel,
-      links: [
-        {
-          name: 'financial year',
-          href: '/dashboard/financial-year',
-          status: 'main',
-        },
-        {
-          name: 'designation',
-          href: '/dashboard/designation',
-        },
-        {
-          name: 'user-Employee registration',
-          href: '/dashboard/user-employee',
-        },
-        {
-          name: 'region type',
-          href: '/dashboard/region-type',
-        },
-        {
-          name: 'region area',
-          href: '/dashboard/region-area',
-        },
-        {
-          name: 'Institution type',
-          href: '/dashboard/institution-type',
-        },
-        {
-          name: 'Institution',
-          href: '/dashboard/institution',
-        },
-        {
-          name: 'book category',
-          href: '/dashboard/book-category',
-        },
-        {
-          name: 'books (Products)',
-          href: '/dashboard/book-management',
-        },
-        {
-          name: 'party management',
-          href: '/dashboard/party-management',
-        },
-        {
-          name: 'Sales & Distribution Expense Ledger',
-          href: '/dashboard/ta-da',
-        },
-        {
-          name: 'purpose category',
-          href: '/dashboard/purpose-management',
-        },
-        {
-          name: 'mapping employee VS region',
-          href: '/dashboard/mapping',
-        },
-        {
-          name: 'class info management',
-          href: '/dashboard/class-management',
-        },
-        {
-          name: 'subject info management',
-          href: '/dashboard/subject-management',
-        },
-        {
-          name: 'specimen order',
-          href: '/dashboard/specimen',
-        },
-      ],
-    },
-    {
-      section: 'Transection',
-      icon: MdOutlineEqualizer,
-      links: [
-        {
-          name: 'assign visit plans',
-          href: '/dashboard/visit-plan',
-        },
-        {
-          name: 'visit approval process',
-          href: '/dashboard/visit-approval',
-        },
-        {
-          name: 'visit entry',
-          href: '/dashboard/visit-entry',
-        },
-        {
-          name: 'visit approval',
-          href: '/dashboard/visit-approval-inital',
-        },
-        {
-          name: 'production order',
-          href: '/dashboard/production-order',
-        },
-        {
-          name: 'product receipt',
-          href: '/dashboard/product-receipt',
-        },
-        {
-          name: 'sales orders',
-          href: '/dashboard/sales-order',
-        },
-        {
-          name: 'sales order approval process',
-          href: '/dashboard/sales-order-approval',
-        },
-        {
-          name: 'delivery challan',
-          href: '/dashboard/delivery-challan',
-        },
-        {
-          name: 'invoice/Bill',
-          href: '/dashboard/invoice-bill',
-        },
-        {
-          name: 'money receipt',
-          href: '/dashboard/money-receipt',
-        },
-        {
-          name: 'sales return',
-          href: '/dashboard/sales-return',
-        },
-        {
-          name: 'inventory transfer',
-          href: '/dashboard/inventory-transfer',
-        },
-      ],
-    },
-    {
-      section: 'Report',
-      icon: BiQrScan,
-      links: [
-        {
-          name: 'stock in-out report',
-          href: '/dashboard/stock-in-out-report',
-        },
-        {
-          name: 'current stock report',
-          href: '/dashboard/current-stock-report',
-        },
-      ],
-    },
-  ];
+  const toggleSection = (name) => {
+    if (!isMobile && isCollapsed) return;
+    setExpandedSection(expandedSection === name ? null : name);
+  };
+
+  const toggleSidebar = () => {
+    setIsCollapsed(!isCollapsed);
+    setExpandedSection(null);
+  };
+
+  const sidebarWidth = isCollapsed ? 'w-20' : 'w-64';
+
   return (
-    <div>
-      {displayLink.length &&
-        displayLink.map((item, index) =>
-          item.status === 'main' ? (
+    <div className="relative">
+      <style jsx>{`
+        .sidebar-scroll::-webkit-scrollbar {
+          width: 6px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-track {
+          background: transparent;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb {
+          background: rgba(255, 255, 255, 0.3);
+          border-radius: 3px;
+        }
+        .sidebar-scroll::-webkit-scrollbar-thumb:hover {
+          background: rgba(255, 255, 255, 0.5);
+        }
+        .sidebar-scroll {
+          scrollbar-width: thin;
+          scrollbar-color: rgba(255, 255, 255, 0.3) transparent;
+        }
+        .sidebar-scroll:not(:hover)::-webkit-scrollbar-thumb {
+          background: transparent;
+        }
+        .sidebar-scroll:not(:hover) {
+          scrollbar-color: transparent transparent;
+        }
+      `}</style>
+
+      {/* Hamburger Button */}
+      <button
+        onClick={toggleSidebar}
+        className="fixed top-4 left-4 z-50 p-2 rounded-lg bg-[#FF6F0B] text-white hover:bg-[#e5640a] transition-colors shadow-lg"
+      >
+        <Menu className="w-6 h-6" />
+      </button>
+
+      {/* Sidebar */}
+      <div
+        className={`sidebar-scroll fixed top-0 left-0 h-screen bg-[#FF6F0B] text-white transition-all duration-300 overflow-y-auto z-40 ${sidebarWidth}`}
+        onMouseEnter={() => !isMobile && setIsHovering(true)}
+        onMouseLeave={() => !isMobile && setIsHovering(false)}
+      >
+         {/* Top spacing for hamburger button */}
+       <div className='flex  ml-[100px] mt-2'>
+         <div className="h-16"></div>
+         <Image
+            src="/images/logo.png"
+            height={50}
+            width={250}
+            alt="Brand Name"
+          />
+       </div>
+
+        <div className="py-2">
+          {displayLink.map((item, index) => (
             <div key={index}>
-              <Link
-                className="capitalize block text-sm text-white py-[2px] pl-12"
-                href={item.href}
-              >
-                {item.displayName}
-              </Link>
+              {item.type === 'main' ? (
+                <a
+                  href={item.href}
+                  className={`flex items-center px-3 py-3 hover:bg-[#e5640a] mx-2 rounded-xl cursor-pointer group transition-all ${
+                    isCollapsed ? 'flex-col gap-1 justify-center' : 'flex-row gap-4'
+                  }`}
+                  title={isCollapsed ? item.displayName : ''}
+                >
+                  <div className="relative">
+                    <item.icon className="w-6 h-6 stroke-[2.5]" />
+                  </div>
+                  {isCollapsed ? (
+                    <span className="text-[10px] font-medium text-center leading-tight">{item.displayName}</span>
+                  ) : (
+                    <span className="text-sm font-medium whitespace-nowrap">{item.displayName}</span>
+                  )}
+                </a>
+              ) : (
+                <div>
+                  <div
+                    onClick={() => toggleSection(item.name)}
+                    className={`flex items-center px-3 py-3 hover:bg-[#e5640a] mx-2 rounded-xl cursor-pointer group transition-all ${
+                      isCollapsed ? 'flex-col gap-1 justify-center' : 'flex-row gap-4'
+                    }`}
+                    title={isCollapsed ? item.displayName : ''}
+                  >
+                    <div className="relative">
+                      <item.icon className="w-6 h-6 stroke-[2.5]" />
+                    </div>
+                    {isCollapsed ? (
+                      <span className="text-[10px] font-medium text-center leading-tight">{item.displayName}</span>
+                    ) : (
+                      <>
+                        <span className="text-sm font-medium flex-1 whitespace-nowrap">{item.displayName}</span>
+                        <ChevronRight 
+                          className={`w-4 h-4 transition-transform stroke-[2.5] ${
+                            expandedSection === item.name ? 'rotate-90' : ''
+                          }`} 
+                        />
+                      </>
+                    )}
+                  </div>
+                  
+                  {!isCollapsed && expandedSection === item.name && (
+                    <div className="ml-4 mt-1 mb-2 border-l-2 border-white/30 pl-2">
+                      {item.items.map((subItem, subIndex) => (
+                        <a
+                          key={subIndex}
+                          href={subItem.href}
+                          className="flex items-center gap-3 px-3 py-2.5 hover:bg-[#e5640a] rounded-lg mx-2 cursor-pointer transition-all"
+                        >
+                          <subItem.icon className="w-5 h-5 stroke-[2.5]" />
+                          <span className="text-sm font-medium">{subItem.displayName}</span>
+                        </a>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Add separator after Home and Security & Setting */}
+              {(index === 0 || (displayLink[index].name === 'Security & Setting')) && (
+                <div className="border-t border-white/20 my-3 mx-3"></div>
+              )}
             </div>
-          ) : (
-            <Accordion key={index} allowZeroExpanded={true}>
-              <AccordionItem>
-                <AccordionItemHeading>
-                  <AccordionItemButton className="text-white">
-                    <div className="flex gap-2 items-center pl-12">
-                      <FaArrowRightLong /> {item.displayName}
-                    </div>
-                  </AccordionItemButton>
-                </AccordionItemHeading>
-                <AccordionItemPanel>
-                  {item.internalLinks.map((ele, id) => (
-                    <div key={id}>
-                      <Link
-                        className="capitalize block text-sm text-white py-[2px] pl-12"
-                        href={ele.href}
-                      >
-                        {ele.displayName}
-                      </Link>
-                    </div>
-                  ))}
-                  <div className="border border-gray-300 border-dashed my-2"></div>
-                </AccordionItemPanel>
-              </AccordionItem>
-            </Accordion>
-          )
-        )}
+          ))}
+        </div>
+
+        {/* Bottom spacing */}
+        <div className="h-8"></div>
+      </div>
     </div>
   );
 };

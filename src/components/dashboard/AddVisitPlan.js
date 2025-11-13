@@ -11,6 +11,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const AddVisitPlan = ({session}) => {
     const [userName, setUserName] = useState('')
     const [intName, setIntName] = useState([]);
+    console.log('Institution', intName);
     const [formData, setFormData] = useState({
       VisitPlanNo: '',
       VisitPlanDate: new Date().toISOString().split('T')[0],
@@ -20,7 +21,7 @@ const AddVisitPlan = ({session}) => {
       VisitUserID: '',
       UserID: '',
     });
-
+    console.log(formData);
     useEffect(()=>{
         if(session.user){
             setUserName(session.user.name)

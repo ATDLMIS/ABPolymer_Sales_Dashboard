@@ -44,7 +44,7 @@ const RegionTypeTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.map(item => (
+                {data?.map(item => (
                   <tr
                     className="border-b border-neutral-200 dark:border-white/10"
                     key={item.ID}

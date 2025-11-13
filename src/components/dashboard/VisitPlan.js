@@ -7,7 +7,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const VisitPlan = () => {
   const {status, data} = useGetData('?action=get_visit_plans')
-  
+  console.log(data)
   if(status === 'pending'){
     return <div className='text-xl font-semibold text-center py-6'>Loading...</div>
   }

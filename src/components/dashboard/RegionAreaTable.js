@@ -7,7 +7,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const RegionAreaTable = () => {
   const url =
     '?action=get_regions';
-  const { status, data } = useGetData(url);
+  const { status, data} = useGetData(url);
   console.log("region area table",data)
 
   if (status === 'pending') {
@@ -63,7 +63,7 @@ const RegionAreaTable = () => {
                 </tr>
               </thead>
               <tbody>
-                {data.map(item => (
+                {data || [].map(item => (
                   <tr
                     className="border-b border-neutral-200 dark:border-white/10"
                     key={item.RegionID}

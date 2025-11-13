@@ -44,7 +44,7 @@ const ProductReceiptView = ({ id }) => {
             <h1>{data.receipt.BindingPartyID}</h1>
           </div>
           <div className="flex items-center gap-2">
-            <h1 className="text-lg">Binding Party Name:</h1>
+            <h1 className="text-lg">Party Name:</h1>
             <h1>{data.receipt.BindingPartyName}</h1>
           </div>
           <div className="flex items-center gap-2">

@@ -1,92 +1,107 @@
+// BookManagement.jsx - Using the reusable DataTable
 'use client';
 import { FaEye, FaRegEdit } from 'react-icons/fa';
 import useGetData from '@/utils/useGetData';
 import Link from 'next/link';
+import DataTable from '../table/DataTable';
+
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const BookManagement = () => {
-  const url =
-    '?action=get_products';
+  const url = '?action=get_products';
   const { status, data } = useGetData(url);
-  console.log("All Product",data);
-  if (status === 'pending') {
-    return <div>Loading....</div>;
-  }
-  if (status === 'error') {
-    return <div>something went wrong</div>;
-  }
+  // Define table columns
+  const columns = [
+    {
+      key: 'ProductCode',
+      header: 'Product Code',
+      width: '7%',
+      headerClassName: 'text-center',
+      cellClassName: 'font-medium text-center'
+    },
+    {
+      key: 'CategoryName',
+      header: 'Product Type',
+      width: '7%'
+    },
+    {
+      key: 'ProductName',
+      header: 'Product Name',
+      width: '15%'
+    },
+    {
+      key: 'Price',
+      header: 'Price',
+      width: '5%'
+    },
+    // {
+    //   key: 'OuterDiameter',
+    //   header: 'Outer Diameter',
+    //   width: '5%'
+    // },
+    {
+      key: 'Thikness',
+      header: 'Thikness',
+      width: '5%'
+    },
+    {
+      key: 'Length',
+      header: 'Length',
+      width: '5%'
+    },
+    // {
+    //   key: 'Color',
+    //   header: 'Color',
+    //   width: '5%'
+    // },
+    {
+      key: 'Weight',
+      header: 'Weight',
+      width: '5%'
+    },
+    {
+      key: 'TradePrice',
+      header: 'TradePrice',
+      width: '5%'
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '5%',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+      render: (row) => (
+        <div className="flex justify-center items-center gap-3">
+          <Link
+            href={`/dashboard/book-management/view/${row.ProductID}`}
+            className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
+            title="View Details"
+          >
+            <FaEye className="text-lg" />
+          </Link>
+          
+          <Link
+            href={`/dashboard/book-management/edit/${row.ProductID}`}
+            className="inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
+            title="Edit Product"
+          >
+            <FaRegEdit className="text-lg" />
+          </Link>
+        </div>
+      )
+    }
+  ];
 
   return (
-    <div className="flex flex-col">
-      <div>
-        <div className="inline-block max-w-full w-full pt-5">
-          <div className="overflow-x-scroll">
-            <table className="max-w-full w-full overflow-x-scroll border border-neutral-200 text-center text-sm font-light text-surface dark:border-white/10 dark:text-white">
-              <thead className="border-b border-neutral-200 font-medium dark:border-white/10">
-                <tr className="bg-text1 text-white">
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Id
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Product Type
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Product Name
-                  </th>
+    <div className="container mx-auto px-4 py-6">
 
-                  <th scope="col" className="px-6 py-4">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.map(item => (
-                  <tr
-                    className="border-b border-neutral-200 dark:border-white/10"
-                    key={item.ProductID}
-                  >
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                      {item.ProductID}
-                    </td>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 dark:border-white/10">
-                      {item.CategoryName}
-                    </td>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 dark:border-white/10">
-                      {item.ProductName}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 flex justify-center items-center gap-3">
-                      <span className="bg-cyan-500 p-1 inline-block rounded-md">
-                        <Link
-                          href={`/dashboard/book-management/view/${item.ProductID}`}
-                        >
-                          <FaEye className="text-white text-xl" />
-                        </Link>
-                      </span>{' '}
-                      |
-                      <span className="bg-amber-600 p-1 inline-block rounded-md">
-                        <Link
-                          href={`/dashboard/book-management/edit/${item.ProductID}`}
-                        >
-                          <FaRegEdit className="text-white text-xl" />
-                        </Link>
-                      </span>{' '}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </div>
+      <DataTable
+        columns={columns}
+        data={data}
+        isLoading={status === 'pending'}
+        error={status === 'error' ? 'Failed to load products' : null}
+        emptyMessage="No products found"
+      />
     </div>
   );
 };

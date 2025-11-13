@@ -4,7 +4,7 @@ const nextConfig = {
   remotePatterns: [
     {
       protocol: 'https',
-      hostname: 'kblsf.site',
+      hostname: 'asianabpolymer.com',
     },
   ],
 },

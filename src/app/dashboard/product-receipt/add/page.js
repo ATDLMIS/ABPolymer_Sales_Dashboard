@@ -238,7 +238,7 @@ const page = () => {
           </div>
           <div>
             <label className="capitalize flex font-semibold text-md py-1">
-              Binding Party Name:
+              Party Name:
             </label>
 
             <select

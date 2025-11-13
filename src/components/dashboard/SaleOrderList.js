@@ -10,7 +10,7 @@ const SaleOrderList = () => {
   const { status, data } = useGetData(
     '?action=get_salesorders'
   );
-
+console.log("Sales Order",data)
   if (status === 'pending') {
     return (
       <div className="text-xl font-semibold text-center py-6">Loading...</div>

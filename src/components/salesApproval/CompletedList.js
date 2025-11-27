@@ -1,100 +1,77 @@
 import Link from "next/link"
-import convertDateFormat from "@/utils/convertDateFormat"
-import formatAmountWithCommas from "@/utils/formatAmountWithCommas"
-
+import DataTable from "../table/DataTable";
+import { FaEye} from 'react-icons/fa';
 const CompletedList = ({completedData, type}) => {
-    if(!completedData || completedData?.status === 'pending'){
-        return <div className="text-xl font-semibold text-center py-5">Loading...</div>
-    }
-  return (
-    <>
-        <h1 className="text-2xl capitalize mb-2">Approved List</h1>
-        <div className="flex flex-col">
-        <div>
-          <div className="inline-block max-w-full w-full pt-5">
-            <div className="overflow-x-scroll">
-              <table className="max-w-full w-full overflow-x-scroll border border-neutral-200 text-center text-sm font-light text-surface dark:border-white/10 dark:text-white">
-                <thead className="border-b border-neutral-200 font-medium dark:border-white/10">
-                  <tr className="bg-text1 text-white">
-                    <th
-                      scope="col"
-                      className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                    >
-                      SL
-                    </th>
-                    <th
-                      scope="col"
-                      className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                    >
-                      Sales Order No
-                    </th>
-                    <th
-                      scope="col"
-                      className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                    >
-                      Order Date
-                    </th>
-                    <th
-                      scope="col"
-                      className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                    >{type === 'sales' ? 'Party Name' : "Specimen Name"}  
-                    </th>
-                    <th
-                      scope="col"
-                      className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                    >
-                      Total Amount
-                    </th>
-                    <th
-                      scope="col"
-                      className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                    >
-                      Approval Status
-                    </th>
-                    <th scope="col" className="px-6 py-4">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {completedData.data.length ? completedData.data.map(item =>(
-                    <tr className="border-b border-neutral-200 dark:border-white/10" key={item.SalesOrderID}>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                      {item.SL}
-                    </td>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                      {item.SalesOrderNo}
-                    </td>
-
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                      {convertDateFormat(item.OrderDate)}
-                    </td>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                     {type === "sales" ? item.partyname : item.SpecimenUserName }
-                    </td>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                      {formatAmountWithCommas(Number(item.TotalAmount))}
-                    </td>
-                    <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                      {item.Status}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 flex justify-center gap-3">
-                    <Link href={type === 'sales' ? `/dashboard/sales-order-approval/view/sales-view/${item.SalesOrderID}`: `/dashboard/sales-order-approval/view/speciman-view/${item.SalesOrderID}`}>
-                      <button className="bg-gray-300 px-1 py-[2px]">
-                        View
-                      </button>
-                    </Link>
-
-                    </td>
-                  </tr>
-                  )) : <div className="text-center text-xl font-semibold">No Data to Display</div>}
-                </tbody>
-              </table>
-            </div>
-          </div>
+     // Define table columns
+  const columns = [
+    {
+      key: 'SL',
+      header: 'SL',
+      width: '7%',
+      headerClassName: 'text-center',
+      cellClassName: 'font-medium text-center'
+    },
+    {
+      key: 'SalesOrderNo',
+      header: 'Sales Order No',
+      width: '15%'
+    },
+    {
+      key: 'OrderDate',
+      header: 'Order Date',
+      width: '15%'
+    },
+    {
+      key:  type === 'speciman'
+                          ? 'SpecimenUserName'
+                          : 'partyname',
+      header:  type === 'speciman' ? 'Employee Name' : 'Party Name',
+      width: '25%'
+    },
+  
+    {
+      key: 'TotalAmount',
+      header: 'Total Amount',
+      width: '15%'
+    },
+    {
+      key: 'Status',
+      header: 'Approval Status',
+      width: '15%'
+    },
+    
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '7%',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+      render: (row) => (
+        <div className="flex justify-center items-center gap-3">
+         
+         <Link
+           href={type === 'sales' ? `/dashboard/sales-order-approval/view/sales-view/${row.SalesOrderID}`: `/dashboard/sales-order-approval/view/speciman-view/${row.SalesOrderID}`}
+            className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
+            title="View Details"
+            >
+            <FaEye className="text-lg" />
+          </Link>
+          
+      
         </div>
-      </div>
-    </>
+      )
+    }
+  ];
+  return (
+       <div >
+      <DataTable
+        columns={columns}
+        data={completedData?.data}
+        isLoading={completedData?.status === 'loading'}
+        error={completedData?.status === 'error' ? 'Failed to load data' : null}
+        emptyMessage="No data found"
+      />
+    </div>
     
   )
 }

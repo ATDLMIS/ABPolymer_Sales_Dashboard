@@ -1,6 +1,6 @@
 "use client";
 import DataTable from '@/components/table/DataTable';
-import useGetData from '@/utils/useGetData';
+import useGetData from '@/utils/axios';
 import Link from 'next/link';
 import { FaEye, FaRegEdit } from 'react-icons/fa';
 

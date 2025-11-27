@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
 import Axios from '@/utils/axios';
+import FormSelect from '../fromField/FormSelect';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const BookById = ({ name = 'ProductID', item, update }) => {
+const ProductById = ({ item, update }) => {
   const [books, setBooks] = useState([]);
   const getBooksByCategoryId = async () => {
     const res = await Axios.get(
@@ -17,22 +18,19 @@ const BookById = ({ name = 'ProductID', item, update }) => {
   }, [item.ProductCategoryID]);
 
   return (
-    <select
-      name={name}
-      className="w-full rounded-md py-[0.40rem]"
-      value={item[name]}
-      onChange={event => update(event, item)}
-      disabled={item.ProductCategoryID && item.FinancialYearID ? false : true}
-    >
-      <option value=""></option>
-      {books.length &&
-        books.map(book => (
-          <option value={book.ProductID} key={book.ProductID}>
-            {book.ProductName}
-          </option>
-        ))}
-    </select>
+    <FormSelect
+  onChange={(e) => update(e, item)}
+  disabled={!item.ProductCategoryID}
+  labelKey="ProductName"
+  valueKey="ProductID"
+  options={books}
+  placeholder="Product name"
+   id="ProductID"
+  name="ProductID"
+/>
+
+
   );
 };
 
-export default BookById;
+export default ProductById;

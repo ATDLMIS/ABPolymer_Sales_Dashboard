@@ -1,6 +1,5 @@
 'use client';
 import { useState, useEffect } from 'react';
-import axios from 'axios';
 import convertDateFormat from '@/utils/convertDateFormat';
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 import Axios from '@/utils/axios';
@@ -11,6 +10,8 @@ const page = ({ params }) => {
     status: 'pending',
     data: null,
   });
+
+  const [showPreview, setShowPreview] = useState(false);
 
   const getData = async id => {
     const res = await Axios.get(
@@ -30,124 +31,347 @@ const page = ({ params }) => {
 
   if (state.status === 'pending') {
     return (
-      <div className="text-xl font-semibold text-center py-6">Loading...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mb-4"></div>
+          <p className="text-xl font-semibold text-gray-700">Loading...</p>
+        </div>
+      </div>
     );
   }
 
   const renderApprovalSection = (label, comments, by, date) => (
-    <div className="mb-3">
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg">Date:</h1>
-        <h1>{convertDateFormat(date.split(' ')[0]) || 'N/A'}</h1>
-      </div>
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg">{label} By:</h1>
-        <h1>{by || 'N/A'}</h1>
-      </div>
-      <div className="flex items-center gap-2">
-        <h1 className="text-lg">{label} Status:</h1>
-        <h1>{comments || 'N/A'}</h1>
+    <div className="border-l-4 border-blue-500 pl-4 py-3 mb-4 bg-white rounded-r-lg">
+      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-2">{label}</h3>
+      <div className="space-y-1.5">
+        <div className="flex items-center">
+          <span className="text-sm text-gray-600 w-24">Date:</span>
+          <span className="text-sm font-medium text-gray-900">{convertDateFormat(date.split(' ')[0]) || 'N/A'}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm text-gray-600 w-24">By:</span>
+          <span className="text-sm font-medium text-gray-900">{by || 'N/A'}</span>
+        </div>
+        <div className="flex items-center">
+          <span className="text-sm text-gray-600 w-24">Status:</span>
+          <span className="text-sm font-medium text-gray-900">{comments || 'N/A'}</span>
+        </div>
       </div>
     </div>
   );
 
+  const InfoRow = ({ label, value, highlight = false }) => (
+    <div className="flex items-start py-2.5 border-b border-gray-200 last:border-b-0">
+      <span className="text-sm font-medium text-gray-600 w-48 flex-shrink-0">{label}:</span>
+      <span className={`text-sm flex-1 ${highlight ? 'font-bold text-gray-900 text-lg' : 'text-gray-800'}`}>
+        {value}
+      </span>
+    </div>
+  );
+
   return (
-    <>
-      <div>
-        <div className="max-w-xl bg-gray-200 mx-auto rounded-md p-3 my-5">
-          <h1 className="text-center text-xl font-semibold py-4">
-            Money Receipt
-          </h1>
-          <h1>Date: {convertDateFormat(state.data.receipt.MRDate)}</h1>
-          <h1>Money Receipt No: {state.data.receipt.MRNo}</h1>
-          <h1>Party Name: {state.data.receipt.PartyName}</h1>
-          <h1>Amount Received: {formatAmountWithCommas(Number(state.data.receipt.AmountReceived))}</h1>
-          <h1>Amount In Word: {state.data.receipt.InWord}</h1>
-          <h1>Received Method: {state.data.receipt.PaymentMethod}</h1>
-          <h1>
-          Bank Name/ Purpose: {state.data.receipt.PaymentMethodDetails}
-          </h1>
-          {state.data.receipt.PaymentMethodDetailsAcc && (
-            <h1>
-              Account Number: {state.data.receipt.PaymentMethodDetailsAcc}
-            </h1>
-          )}
-          {state.data.receipt.PaymentMethodID == 4 && (
-            <>
-              <h1>Account Name: {state.data.receipt.AccName}</h1>
-              <h1>Account Number: {state.data.receipt.AccNumber}</h1>
-              <h1>Cheque Number: {state.data.receipt.ChequeNumber}</h1>
-            </>
-          )}
-          {state.data.receipt.Remarks && (
-            <h1>Remarks: {state.data.receipt.Remarks}</h1>
-          )}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8 px-4">
+      <div className="max-w-4xl mx-auto">
+        {/* Money Receipt Card */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden mb-6">
+          {/* Header */}
+          <div className="bg-primary1 px-8 py-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h1 className="text-3xl font-bold text-white mb-1">Money Receipt</h1>
+                <p className="text-blue-100 text-sm">Receipt #{state.data.receipt.MRNo}</p>
+              </div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-6 py-3 text-right">
+                <p className="text-xs text-blue-100 uppercase tracking-wide mb-1">Date</p>
+                <p className="text-lg font-semibold text-white">
+                  {convertDateFormat(state.data.receipt.MRDate)}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Receipt Details */}
+          <div className="px-8 py-6">
+            <div className="grid md:grid-cols-2 gap-6 mb-6">
+              {/* Party Information */}
+              <div className="bg-gray-50 rounded-lg p-5">
+                <h2 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">
+                  Party Details
+                </h2>
+                <p className="text-lg font-semibold text-gray-900">{state.data.receipt.PartyName}</p>
+              </div>
+
+              {/* Amount Information */}
+              <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-5 border border-green-200">
+                <h2 className="text-xs font-semibold text-green-700 uppercase tracking-wide mb-2">
+                  Amount Received
+                </h2>
+                <p className="text-2xl font-bold text-green-700 mb-1">
+                  {state.data.receipt.AmountReceived}
+                </p>
+                <p className="text-xs text-green-600 italic">{state.data.receipt.InWord}</p>
+              </div>
+            </div>
+
+            {/* Payment Details */}
+            <div className="border-t border-gray-200 pt-6">
+              <h2 className="text-sm font-semibold text-gray-700 uppercase tracking-wide mb-4">
+                Payment Information
+              </h2>
+              <div className="space-y-0 bg-gray-50 rounded-lg p-5">
+                <InfoRow label="Payment Method" value={state.data.receipt.PaymentMethod} />
+                <InfoRow label="Bank Name / Purpose" value={state.data.receipt.PaymentMethodDetails} />
+                
+                {state.data.receipt.PaymentMethodDetailsAcc && (
+                  <InfoRow label="Account Number" value={state.data.receipt.PaymentMethodDetailsAcc} />
+                )}
+                
+                {state.data.receipt.PaymentMethodID == 4 && (
+                  <>
+                    <InfoRow label="Account Name" value={state.data.receipt.AccName} />
+                    <InfoRow label="Account Number" value={state.data.receipt.AccNumber} />
+                    <InfoRow label="Cheque Number" value={state.data.receipt.ChequeNumber} />
+                  </>
+                )}
+                
+                {state.data.receipt.Remarks && (
+                  <InfoRow label="Remarks" value={state.data.receipt.Remarks} />
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Approval/Cancellation Card */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="bg-gray-100 px-8 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">
+              {state.data.Approvals.CanclledComments ? 'Cancellation Details' : 'Approval Timeline'}
+            </h2>
+          </div>
+
+          <div className="px-8 py-6">
+            {state.data.Approvals.CanclledComments ? (
+              <div className="border-l-4 border-red-500 pl-4 py-3 bg-red-50 rounded-r-lg">
+                <h3 className="text-sm font-semibold text-red-700 uppercase tracking-wide mb-3">
+                  Cancelled
+                </h3>
+                <div className="space-y-1.5">
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-600 w-32">Cancelled By:</span>
+                    <span className="text-sm font-medium text-gray-900">{state.data.Approvals.CancelledBy}</span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-600 w-32">Date:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {convertDateFormat(state.data.Approvals.CancelledDate)}
+                    </span>
+                  </div>
+                  <div className="flex items-center">
+                    <span className="text-sm text-gray-600 w-32">Status:</span>
+                    <span className="text-sm font-medium text-gray-900">
+                      {state.data.Approvals.CanclledComments || 'N/A'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                {state.data.Approvals.CheckedComments &&
+                  renderApprovalSection(
+                    'Checked',
+                    state.data.Approvals.CheckedComments,
+                    state.data.Approvals.CheckedBy,
+                    state.data.Approvals.CheckedDate
+                  )}
+                {state.data.Approvals.AuthComments &&
+                  renderApprovalSection(
+                    'Authorized',
+                    state.data.Approvals.AuthComments,
+                    state.data.Approvals.AuthBy,
+                    state.data.Approvals.AuthDate
+                  )}
+                {state.data.Approvals.RejectComments &&
+                  renderApprovalSection(
+                    'Rejected',
+                    state.data.Approvals.RejectComments,
+                    state.data.Approvals.RejectBy,
+                    state.data.Approvals.RejectDate
+                  )}
+                {state.data.Approvals.AppComments &&
+                  renderApprovalSection(
+                    'Approved',
+                    state.data.Approvals.AppComments,
+                    state.data.Approvals.AppBy,
+                    state.data.Approvals.AppDate
+                  )}
+                {!state.data.Approvals.CheckedComments &&
+                  !state.data.Approvals.AuthComments &&
+                  !state.data.Approvals.AppComments && (
+                    <div className="text-center py-8 text-gray-500">
+                      <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>
+                      <p className="font-medium">No Approval Details Available</p>
+                      <p className="text-sm mt-1">This receipt is pending approval</p>
+                    </div>
+                  )}
+              </>
+            )}
+          </div>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="mt-6 flex justify-center gap-4">
+          <button 
+            onClick={() => setShowPreview(true)} 
+            className="bg-primary1 text-white font-medium px-8 py-3 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Preview Receipt
+          </button>
         </div>
       </div>
 
-      <div className="flex justify-center mt-5">
-        <div className="min-w-[600px] rounded-md bg-gray-300 p-5">
-          {state.data.Approvals.CanclledComments ? (
-            <div className="mt-4">
-              <h1 className="text-lg font-semibold">Cancellation Details</h1>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg">Cancelled By:</h1>
-                <h1>{state.data.Approvals.CancelledBy}</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg">Date:</h1>
-                <h1>{convertDateFormat(state.data.Approvals.CancelledDate)}</h1>
-              </div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg">Status:</h1>
-                <h1>{state.data.Approvals.CanclledComments || 'N/A'}</h1>
+      {/* Print Preview Modal */}
+      {showPreview && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center">
+              <h2 className="text-xl font-semibold text-gray-800">Print Preview</h2>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => window.print()} 
+                  className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                  </svg>
+                  Print
+                </button>
+                <button 
+                  onClick={() => setShowPreview(false)} 
+                  className="bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-6 py-2 rounded-lg transition-colors duration-200"
+                >
+                  Close
+                </button>
               </div>
             </div>
-          ) : (
-            <>
-              <h1 className="text-center text-lg font-semibold mb-3">
-                Approval Details
-              </h1>
-              {state.data.Approvals.CheckedComments &&
-                renderApprovalSection(
-                  'Checked',
-                  state.data.Approvals.CheckedComments,
-                  state.data.Approvals.CheckedBy,
-                  state.data.Approvals.CheckedDate
-                )}
-              {state.data.Approvals.AuthComments &&
-                renderApprovalSection(
-                  'Authorized',
-                  state.data.Approvals.AuthComments,
-                  state.data.Approvals.AuthBy,
-                  state.data.Approvals.AuthDate
-                )}
-              {state.data.Approvals.RejectComments &&
-                renderApprovalSection(
-                  'Rejected',
-                  state.data.Approvals.RejectComments,
-                  state.data.Approvals.RejectBy,
-                  state.data.Approvals.RejectDate
-                )}
-              {state.data.Approvals.AppComments &&
-                renderApprovalSection(
-                  'Approved',
-                  state.data.Approvals.AppComments,
-                  state.data.Approvals.AppBy,
-                  state.data.Approvals.AppDate
-                )}
-              {!state.data.Approvals.CheckedComments &&
-                !state.data.Approvals.AuthComments &&
-                !state.data.Approvals.AppComments && (
-                  <div className="text-center">
-                    No Approval Details Available
+            
+            <div id="printable-receipt" className="p-8 bg-white">
+              {/* Header Section */}
+              <div className="border-b-2 border-gray-800 pb-6 mb-6">
+                <div className="flex justify-between items-start">
+                  <div className="flex items-center gap-4">
+                    <div className="w-24 h-24  flex items-center justify-center rounded">
+                     <img 
+    src="/images/logo.png" 
+    alt="Asian AB Polymer" 
+    className="w-30 h-30 mx-auto" 
+  />
+                    </div>
+                    <div>
+                      <h1 className="text-2xl font-bold text-gray-900">Asian AB Polymer Industries Ltd.</h1>
+                      <p className="text-sm text-gray-600 mt-1">House # 41 (level-3), Road #7 Block # F, Banani, Dhaka-1213</p>
+                    </div>
                   </div>
-                )}
-            </>
-          )}
+                  <div className="border-2 border-gray-800 px-4 py-2">
+                    <p className="text-sm font-semibold">Client Copy</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Money Receipt Title */}
+              <div className="bg-gray-200 py-3 mb-6 text-center">
+                <h2 className="text-3xl font-bold text-gray-900">Money Receipt</h2>
+              </div>
+
+              {/* Receipt Info */}
+              <div className="flex justify-between mb-8">
+                <div className="space-y-1">
+                  <p className="text-sm"><span className="font-semibold">Receipt No :</span> {state.data.receipt.MRNo}</p>
+                </div>
+                <div className="space-y-1 text-right">
+                  <p className="text-sm"><span className="font-semibold">Date :</span> {convertDateFormat(state.data.receipt.MRDate)}</p>
+                </div>
+              </div>
+
+              {/* Receipt Details */}
+              <div className="space-y-4 mb-12">
+                <div className="flex">
+                  <span className="font-semibold w-48">Center/Project</span>
+                  <span className="mr-4">:</span>
+                  <span>{state.data.receipt.CenterProject || 'AR-CENTRAL STORE'}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-semibold w-48">Customer</span>
+                  <span className="mr-4">:</span>
+                  <span>{state.data.receipt.PartyName}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-semibold w-48">Cheque No</span>
+                  <span className="mr-4">:</span>
+                  <span>{state.data.receipt.PaymentMethodDetails || 'RTGS'}</span>
+                </div>
+                <div className="flex">
+                  <span className="font-semibold w-48">Cheque Date</span>
+                  <span className="mr-4">:</span>
+                  <span>{state.data.receipt.ChequeDate ? convertDateFormat(state.data.receipt.ChequeDate) : ''}</span>
+                </div>
+                <div className="flex items-start">
+                  <span className="font-semibold w-48">Amount</span>
+                  <span className="mr-4">:</span>
+                  <div>
+                    <p className="font-bold text-lg">TK {state.data.receipt.AmountReceived}</p>
+                    <p className="text-sm mt-1">IN WORD - ( {state.data.receipt.InWord} )</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Signature Section */}
+              <div className="flex justify-between items-end pt-16 border-t border-gray-300">
+                <div className="text-center">
+                  <div className="border-t-2 border-gray-800 w-48 mb-2"></div>
+                  <p className="font-semibold">Customer</p>
+                </div>
+                <div className="text-center">
+                  <div className="border-t-2 border-gray-800 w-48 mb-2"></div>
+                  <p className="font-semibold">Received By</p>
+                </div>
+              </div>
+
+              {/* Footer Note */}
+              <div className="mt-8 text-xs text-gray-600">
+                <p>N.B. This money receipt against Cheque/PO is valid subject to the clearance of the same.</p>
+              </div>
+
+              {/* Dashed Line Separator */}
+              <div className="border-t-2 border-dashed border-gray-400 my-8"></div>
+            </div>
+          </div>
         </div>
-      </div>
-    </>
+      )}
+
+      <style jsx>{`
+        @media print {
+          body * {
+            visibility: hidden;
+          }
+          #printable-receipt, #printable-receipt * {
+            visibility: visible;
+          }
+          #printable-receipt {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+          }
+        }
+      `}</style>
+    </div>
   );
 };
 

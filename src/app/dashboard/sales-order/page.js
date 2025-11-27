@@ -65,13 +65,13 @@ const page = () => {
 			<div className='flex justify-between items-center'>
 				{current === "sales" ? (
 					<Link href='/dashboard/sales-order/add/sales'>
-						<button className='capitalize bg-primary1 px-2 py-1 text-white rounded-md'>
+						<button className='capitalize bg-primary1 px-2 py-1 text-white rounded-md ml-5'>
 							Add Sales Order
 						</button>
 					</Link>
 				) : (
 					<Link href='/dashboard/sales-order/add/speciman'>
-						<button className='capitalize bg-primary1 px-2 py-1 text-white rounded-md'>
+						<button className='capitalize bg-primary1 px-2 py-1 text-white rounded-md ml-5'>
 							Add Speciman Order
 						</button>
 					</Link>
@@ -82,7 +82,7 @@ const page = () => {
 						name='search'
 						type='text'
 						placeholder='Search'
-						className='text-md outline-1 border-1 focus:ring-0 rounded-md w-[300px] text-sm'
+						className='text-md outline-1 border-1 focus:ring-0 rounded-md w-[250px] text-sm mr-5'
 					/>
 				</form>
 			</div>

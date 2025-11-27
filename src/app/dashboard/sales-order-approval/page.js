@@ -8,7 +8,7 @@ const page = () => {
 
   return (
     <div>
-      <div className="flex justify-between items-center">
+      {/* <div className="flex justify-between items-center">
         <h1 className="text-2xl capitalize mb-3">
           Sales Order approval system
         </h1>
@@ -20,10 +20,10 @@ const page = () => {
             className="text-md outline-1 border-1 focus:ring-0 rounded-md w-[300px] text-sm"
           />
         </form>
-      </div>
-      <div>
-      <div className="flex gap-8 items-center mb-5">
-        <div className="flex gap-4">
+      </div> */}
+      <div >
+      <div className="flex gap-8 items-center mb-5 items-center justify-center">
+        <div className="flex gap-4 ">
           <div
             className="flex gap-2 items-center"
             onClick={() => {

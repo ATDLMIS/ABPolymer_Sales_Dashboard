@@ -9,6 +9,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const registrationForm = () => {
   const [desigs, setDesigs] = useState([]);
   const [reportingTo, setReportingTo] = useState([]);
+  console.log(reportingTo);
   const [imagePreview, setImagePreview] = useState('');
 
   const getDesig = async cb => {

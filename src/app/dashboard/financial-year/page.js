@@ -1,16 +1,16 @@
 "use client";
 import DataTable from '@/components/table/DataTable';
 import useGetData from '@/utils/useGetData';
+import { useSession } from 'next-auth/react';
 const page = () => {
   let url =
     '?action=get_financialyears';
 
   let { status, data } = useGetData(url);
-
   // Define table columns
   const columns = [
     {
-      key: 'ID',
+      key: 'id',
       header: 'ID',
       width: '10%',
       headerClassName: 'text-center',
@@ -41,15 +41,7 @@ const page = () => {
   return (
     <div>
       <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-semibold">Financial Year</h1>
-        <form>
-          <input
-            name="search"
-            type="text"
-            placeholder="Search"
-            className="text-md outline-1 border-1 focus:ring-0 rounded-md w-[300px] text-sm"
-          />
-        </form>
+        <h1 className="text-2xl font-semibold mb-5">Financial Year</h1>
       </div>
      <DataTable 
       columns={columns}

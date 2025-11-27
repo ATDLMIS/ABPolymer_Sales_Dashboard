@@ -1,6 +1,7 @@
-// DataTable.jsx - Reusable table component
+// DataTable.jsx - Fully Responsive table component
 'use client';
 import React from 'react';
+import Loading from '../Loading';
 
 const DataTable = ({ 
   columns, 
@@ -37,12 +38,7 @@ const DataTable = ({
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-12">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-          <p className="text-gray-600 dark:text-gray-400">Loading...</p>
-        </div>
-      </div>
+     <Loading />
     );
   }
 
@@ -118,17 +114,17 @@ const DataTable = ({
   return (
     <div className={`w-full ${className}`}>
       <div className="overflow-x-auto rounded-lg border border-gray-200 dark:border-gray-700 shadow-sm">
-        <table className="w-full divide-y divide-gray-200 dark:divide-gray-700" style={{ tableLayout: 'fixed' }}>
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead className="bg-primary1 text-white">
             <tr>
               {columns.map((column, index) => (
                 <th
                   key={column.key || index}
                   scope="col"
-                  className={`px-4 py-3 text-left text-xs font-semibold text-white uppercase tracking-wider ${
+                  className={`px-4 py-3 text-left text-xs font-semibold text-white tracking-wider ${
                     column.headerClassName || ''
                   }`}
-                  style={{ width: column.width }}
+                  style={{ minWidth: column.width || 'auto' }}
                 >
                   {column.header}
                 </th>
@@ -155,16 +151,15 @@ const DataTable = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key || colIndex}
-                      className={`px-6 py-4 text-sm text-gray-900 dark:text-gray-100 truncate overflow-hidden whitespace-nowrap ${
+                      className={`px-6 py-4 text-sm text-gray-900 dark:text-gray-100 ${
                         column.cellClassName || ''
                       }`}
-                      style={{
-                        maxWidth: column.width || '200px',
-                        textOverflow: 'ellipsis'
-                      }}
+                      style={{ minWidth: column.width || 'auto' }}
                       title={getCellValue(column, row, rowIndex)}
                     >
-                      {renderCell(column, row, rowIndex)}
+                      <div className="break-words">
+                        {renderCell(column, row, rowIndex)}
+                      </div>
                     </td>
                   ))}
                 </tr>
@@ -178,4 +173,3 @@ const DataTable = ({
 };
 
 export default DataTable;
-

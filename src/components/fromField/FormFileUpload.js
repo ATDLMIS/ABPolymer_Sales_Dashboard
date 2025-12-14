@@ -1,11 +1,8 @@
 const FormFileUpload = ({ label, id, onChange, required = false }) => (
   <div className="mb-4">
-    <label 
-      htmlFor={id} 
-      className="block text-sm font-semibold text-gray-700 mb-2"
-    >
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
+      <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+                    {label} {required && <span className="text-red-500">*</span>}
+                  </label>
     <div className="relative">
       <input
         type="file"

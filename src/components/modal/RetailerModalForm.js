@@ -2,7 +2,7 @@ import { useState } from "react";
 import FormInput from "../fromField/FormInput";
 import Axios from "@/utils/axios";
 
-export default function RetailerModalForm({open, setOpen, partyID, UserID}) {
+export default function RetailerModalForm({open, setOpen, partyID, UserID,setRefreshKey}) {
   const [formData, setFormData] = useState({
     RetailerCode: '',
     RetailerName: '',
@@ -20,8 +20,8 @@ export default function RetailerModalForm({open, setOpen, partyID, UserID}) {
   const handleSubmit = async(e) => {
     e.preventDefault();
     const res = await Axios.post(`?action=create_retailers&PartyID=${partyID}`, formData);
-    console.log(res);
     if (res.status === 200) {
+       setRefreshKey(prev => prev + 1);
        setOpen(false);
     }
   }

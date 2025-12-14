@@ -10,15 +10,14 @@ const FormInput = ({
   required = false,
   placeholder = '',
   className = '',
-  width='w-full'
+  width='w-full',
+  px='px-4',
+  py='py-2.5'
 }) => (
   <div className="mb-4">
-    <label 
-      htmlFor={id} 
-      className="block text-sm font-semibold text-gray-700 mb-2"
-    >
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
+    <label htmlFor={id} className="block text-sm font-medium text-gray-700 mb-2">
+                    {label} {required && <span className="text-red-500">*</span>}
+                  </label>
     <input
       type={type}
       id={id}
@@ -28,7 +27,7 @@ const FormInput = ({
       readOnly={readOnly}
       required={required}
       placeholder={placeholder}
-      className={`${width} px-4 py-2.5 text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#FF6F0B] focus:border-[#FF6F0B] transition-colors ${readOnly ? 'bg-gray-50 cursor-not-allowed' : ''} ${className}`}
+      className={`${width} ${px} ${py}  text-gray-900 bg-white border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#FF6F0B] focus:border-[#FF6F0B] transition-colors ${readOnly ? 'bg-gray-50 cursor-not-allowed' : ''} ${className}`}
     />
   </div>
 );

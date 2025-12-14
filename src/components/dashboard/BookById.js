@@ -21,12 +21,14 @@ const ProductById = ({ item, update }) => {
     <FormSelect
   onChange={(e) => update(e, item)}
   disabled={!item.ProductCategoryID}
+  value={item.ProductID}
   labelKey="ProductName"
   valueKey="ProductID"
   options={books}
   placeholder="Product name"
    id="ProductID"
   name="ProductID"
+  searchKeys={["ProductName", "ProductID"]}
 />
 
 

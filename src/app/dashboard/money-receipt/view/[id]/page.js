@@ -6,11 +6,12 @@ import Axios from '@/utils/axios';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const page = ({ params }) => {
+  console.log(params.id)
   const [state, setState] = useState({
     status: 'pending',
     data: null,
   });
-
+console.log(state)
   const [showPreview, setShowPreview] = useState(false);
 
   const getData = async id => {
@@ -126,11 +127,12 @@ const page = ({ params }) => {
                   <InfoRow label="Account Number" value={state.data.receipt.PaymentMethodDetailsAcc} />
                 )}
                 
-                {state.data.receipt.PaymentMethodID == 4 && (
+                {state.data.receipt.PaymentMethodID == 2 && (
                   <>
-                    <InfoRow label="Account Name" value={state.data.receipt.AccName} />
-                    <InfoRow label="Account Number" value={state.data.receipt.AccNumber} />
-                    <InfoRow label="Cheque Number" value={state.data.receipt.ChequeNumber} />
+                    <InfoRow label="Deposit Name" value={state.data.receipt.DepositName} />
+                    <InfoRow label="Branch Name" value={state.data.receipt.BranchName} />
+                    <InfoRow label="Transaction Number" value={state.data.receipt.TranNumber} />
+                    <InfoRow label="Mobile Number" value={state.data.receipt.MobileNumber} />
                   </>
                 )}
                 

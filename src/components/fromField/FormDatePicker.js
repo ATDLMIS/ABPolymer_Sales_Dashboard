@@ -2,9 +2,9 @@ import DatePicker from "react-datepicker";
 
 const FormDatePicker = ({ label, selected, onChange, required = false }) => (
   <div className="mb-4">
-    <label className="block text-sm font-semibold text-gray-700 mb-2">
-      {label} {required && <span className="text-red-500">*</span>}
-    </label>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {label} {required && <span className="text-red-500">*</span>}
+                  </label>
     <DatePicker
       selected={selected}
       onChange={onChange}

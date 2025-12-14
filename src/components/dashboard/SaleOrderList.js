@@ -23,7 +23,7 @@ const { status, data } = useGetData(url);
     {
       key: 'SalesOrderNo',
       header: 'Sales Order No',
-      width: '15%'
+      width: '20%'
     },
     {
       key: 'OrderDate',
@@ -36,19 +36,24 @@ const { status, data } = useGetData(url);
       width: '20%'
     },
     {
+      key: 'retailer',
+      header: 'Delivery Address',
+      width: '20%'
+    },
+    {
       key: 'Status',
       header: 'Status',
-      width: '15%'
+      width: '10%'
     },
     {
       key: 'logUserName',
       header: 'Log User Name',
-      width: '20%'
+      width: '150%'
     },
     {
       key: 'TotalAmount',
       header: 'Total Amount',
-      width: '15%'
+      width: '10%'
     },
     {
       key: 'actions',
@@ -78,7 +83,7 @@ const { status, data } = useGetData(url);
   ];
  
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="container mt-3">
 
       <DataTable
         columns={columns}

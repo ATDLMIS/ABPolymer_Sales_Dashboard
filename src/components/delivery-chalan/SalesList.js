@@ -3,98 +3,89 @@ import useGetData from '@/utils/useGetData';
 import Link from 'next/link';
 import { FaEye, FaRegEdit } from 'react-icons/fa';
 import convertDateFormat from '@/utils/convertDateFormat';
+import DataTable from '../table/DataTable';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const SalesList = () => {
   const salesOrderList = useGetData(
     '?action=get_challansOrder'
   );
-  console.log(salesOrderList)
-  if (salesOrderList.status === 'pending') {
-    <div className="text-xl font-semibold text-center py-6">Loading...</div>;
-  }
-  return (
-    <div className="flex flex-col">
-      <div>
-        <div className="inline-block max-w-full w-full pt-5">
-          <div className="overflow-x-scroll">
-            <table className="max-w-full w-full overflow-x-scroll border border-neutral-200 text-center text-sm font-light text-surface dark:border-white/10 dark:text-white">
-              <thead className="border-b border-neutral-200 font-medium dark:border-white/10">
-                <tr className="bg-text1 text-white">
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Challan ID
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Challan No.
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Challan Date
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Party Name
-                  </th>
-                  <th
-                    scope="col"
-                    className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                  >
-                    Status
-                  </th>
-
-                  <th scope="col" className="px-6 py-4">
-                    Action
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {salesOrderList.data.length > 0 &&
-                  salesOrderList.data.map(item => (
-                    <tr
-                      className="border-b border-neutral-200 dark:border-white/10"
-                      key={item.ChallanID}
-                    >
-                      <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                        {item.ChallanID}
-                      </td>
-                      <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 dark:border-white/10">
-                        {item.ChallanNo}
-                      </td>
-                      <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 dark:border-white/10">
-                        {convertDateFormat(item.ChallanDate)}
-                      </td>
-                      <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 dark:border-white/10">
-                        {item.PartyName}
-                      </td>
-                      <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 dark:border-white/10">
-                        {item.StatusName}
-                      </td>
-                      <td className="whitespace-nowrap px-6 py-4 flex justify-center items-center gap-3">
-                        <span className="bg-cyan-500 p-1 inline-block rounded-md">
-                          <Link
-                            href={`/dashboard/delivery-challan/view/sales/${item.ChallanID}`}
-                          >
-                            <FaEye className="text-white text-xl" />
-                          </Link>
-                        </span>{' '}
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
+    const columns = [
+    {
+      key: 'SL',
+      header: 'SL',
+      width: '7%',
+      headerClassName: 'text-center',
+      cellClassName: 'font-medium text-center'
+    },
+    {
+      key: 'ChallanNo',
+      header: 'Challan No',
+      width: '15%'
+    },
+    {
+      key: 'ChallanDate',
+      header: 'Challan Date',
+      width: '15%'
+    },
+    // {
+    //   key:  type === 'speciman'
+    //                       ? 'SpecimenUserName'
+    //                       : 'partyname',
+    //   header:  type === 'speciman' ? 'Employee Name' : 'Party Name',
+    //   width: '25%'
+    // },
+  
+    {
+      key: 'PartyName',
+      header: 'Party Name',
+      width: '25%',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+    },
+    {
+      key: 'StatusName',
+      header: 'Challan Status',
+      width: '10%'
+    },
+    // {
+    //   key: 'Status',
+    //   header: 'Status',
+    //   width: '15%'
+    // },
+    
+    {
+      key: 'actions',
+      header: 'Actions',
+      width: '7%',
+      headerClassName: 'text-center',
+      cellClassName: 'text-center',
+      render: (row) => (
+        <div className="flex justify-center items-center gap-3">
+           <Link
+           href={`/dashboard/delivery-challan/view/sales/${row.ChallanID}`}
+            className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
+            title="View Details"
+          >
+            <FaEye  className="text-lg" />
+          </Link>
+        
+         
+          
+          
         </div>
-      </div>
+      )
+    }
+  ];
+  return (
+     <div >
+      <DataTable
+        columns={columns}
+        data={salesOrderList?.data || []}
+        isLoading={salesOrderList.status === 'loading'}
+        error={salesOrderList.status === 'error' ? 'Failed to load data' : null}
+        emptyMessage="No data found"
+      />
     </div>
   );
 };

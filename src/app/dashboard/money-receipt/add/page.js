@@ -104,8 +104,8 @@ const Page = () => {
       dataWillBeSubmitted.append('PaymentMethodDetailsID', formData.PaymentMethodDetailsID);
       dataWillBeSubmitted.append('ReceivedByUserID', userID);
       if(formData.PaymentMethodID == 2){
-         dataWillBeSubmitted.append('ChallanCopyPath', formData.ChallanCopyPath);
-      dataWillBeSubmitted.append('TransactionsNumber', formData.TransactionsNumber);
+         dataWillBeSubmitted.append('DepositSlip', formData.ChallanCopyPath);
+      dataWillBeSubmitted.append('TranNumber', formData.TransactionsNumber);
       dataWillBeSubmitted.append('MobileNumber', formData.MobileNumber);
       dataWillBeSubmitted.append('BranchName', formData.BranchName);
       dataWillBeSubmitted.append('DepositeName', formData.DepositeName);
@@ -124,7 +124,7 @@ const Page = () => {
           },
         }
       );
-      
+      console.log(res?.data);
       if (res.status === 200) {
         router.push('/dashboard/money-receipt');
       }

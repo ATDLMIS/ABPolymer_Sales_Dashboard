@@ -128,6 +128,15 @@ export default function LoginDesignPro() {
                   valueKey="id"
                   labelKey="name"
                   required={true}
+                  searchable={false}
+                  placeholder="Select Financial Year"
+                  style={{
+                    borderColor: focusedInput === "pass" ? ORANGE : "#ddd",
+                    boxShadow:
+                      focusedInput === "pass"
+                        ? "0 4px 10px rgba(255,111,11,0.22)"
+                        : "none",
+                  }}
                 />
              </div>
             {/* Remember + Forgot */}

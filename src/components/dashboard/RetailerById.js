@@ -3,7 +3,7 @@ import Axios from '@/utils/axios';
 import FormSelect from '../fromField/FormSelect';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
-const RetailerById = ({ partyID ,setFormData,fromData, allRetailers, setAllRetailers}) => {
+const RetailerById = ({ partyID ,setFormData,fromData, allRetailers, setAllRetailers, refreshTrigger}) => {
   const getRetailerById = async (partyID) => {
     if (!partyID) {
       return;
@@ -11,7 +11,7 @@ const RetailerById = ({ partyID ,setFormData,fromData, allRetailers, setAllRetai
     const res = await Axios.get(
       `?action=get_Retailers&PartyID=${partyID}`
     );
-    console.log(res?.data);
+    console.log("loaded retailers", res?.data?.retailers);
     setAllRetailers((res?.data?.retailers));
   };
 
@@ -20,11 +20,14 @@ const RetailerById = ({ partyID ,setFormData,fromData, allRetailers, setAllRetai
       return;
     }
     getRetailerById(partyID);
-  }, [partyID, allRetailers]);
+  }, [partyID, refreshTrigger]);
 
   return (
     
     <FormSelect
+      label='Retailer Name'
+      id="OutletID"
+      value={fromData.OutletID}
        onChange={event => setFormData({...fromData, OutletID:event.target.value})}
        disabled={partyID ? false : true}
       required={false}
@@ -32,6 +35,8 @@ const RetailerById = ({ partyID ,setFormData,fromData, allRetailers, setAllRetai
       valueKey="RetailerID"
       options={allRetailers}
       placeholder='Retailer name'
+      searchable={true}
+      searchKeys={['RetailerName', 'RetailerID']}
     />
 
   );

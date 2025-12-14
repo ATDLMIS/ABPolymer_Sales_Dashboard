@@ -9,7 +9,6 @@ const ProductReceiptList = () => {
     '?action=get_ppreceipts'
   );
 
-  console.log(data);
 
   if (status === 'pending') {
     return (

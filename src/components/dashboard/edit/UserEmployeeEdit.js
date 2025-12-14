@@ -6,6 +6,7 @@ import Axios from '@/utils/axios';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const UserEmployeeEdit = ({ id }) => {
+  console.log('ID:', id);
   const [desigs, setDesigs] = useState([]);
   const [reportingTo, setReportingTo] = useState([]);
   const [error, setError] = useState("");
@@ -24,7 +25,7 @@ const UserEmployeeEdit = ({ id }) => {
     reportingTo: '',
     status: '',
   });
-
+ console.log(formData.reportingTo)
   // Validate ID prop
   if (!id || typeof id !== 'string') {
     console.error('Invalid id prop provided to UserEmployeeEdit');
@@ -33,7 +34,7 @@ const UserEmployeeEdit = ({ id }) => {
   const { status, data, error: dataError } = useGetData(
     `?action=get_sndUser&UserID=${id}`
   );
-
+  console.log(data);
   // Handle data fetching errors
   useEffect(() => {
     if (dataError) {
@@ -43,7 +44,7 @@ const UserEmployeeEdit = ({ id }) => {
   }, [dataError]);
 
   useEffect(() => {
-    if (status === 'success' && data) {
+    if ( data) {
       try {
         setFormData({
           employeeName: data.EmpName || '',
@@ -62,7 +63,7 @@ const UserEmployeeEdit = ({ id }) => {
         setApiError('Error processing user data.');
       }
     }
-  }, [status, data]);
+  }, [ data]);
 
   const getDesig = async (cb) => {
     try {
@@ -550,7 +551,7 @@ const UserEmployeeEdit = ({ id }) => {
               {reportingTo.length > 0 ? (
                 reportingTo.map(item => (
                   <option value={item.UserID} key={item.UserID}>
-                    {item.reportUsers}
+                    {item.ReportUsers}
                   </option>
                 ))
               ) : (

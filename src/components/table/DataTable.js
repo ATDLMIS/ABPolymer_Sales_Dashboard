@@ -121,7 +121,7 @@ const DataTable = ({
                 <th
                   key={column.key || index}
                   scope="col"
-                  className={`px-4 py-3 text-left text-xs font-semibold text-white tracking-wider ${
+                  className={`px-4 py-3 text-left text-sm font-normal text-white tracking-wider ${
                     column.headerClassName || ''
                   }`}
                   style={{ minWidth: column.width || 'auto' }}
@@ -151,7 +151,7 @@ const DataTable = ({
                   {columns.map((column, colIndex) => (
                     <td
                       key={column.key || colIndex}
-                      className={`px-6 py-4 text-sm text-gray-900 dark:text-gray-100 ${
+                      className={`px-3 py-1 text-sm text-gray-900 dark:text-gray-100 ${
                         column.cellClassName || ''
                       }`}
                       style={{ minWidth: column.width || 'auto' }}

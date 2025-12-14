@@ -7,12 +7,19 @@ import SpecimanPendingList from '@/components/delivery-chalan/SpecimanPendingLis
 
 const page = () => {
   const [current, setCurrent] = useState('sales');
+   const [activeTab, setActiveTab] = useState('pending')
+  const tabs = [
+    { id: 'pending', label: 'Pending', component:   <SalesPendingList  type="sales" /> },
+    { id: 'completed', label: 'Completed', component:  <SalesList  type="sales" /> },
+  ]
+
+  const ActiveComponent = tabs.find(tab => tab.id === activeTab)?.component
   return (
     <div>
-      <div className="flex gap-8 items-center mb-5">
-        <h1 className="text-2xl capitalize">
+      <div className="flex justify-center gap-8 items-center mb-5">
+        {/* <h1 className="text-2xl capitalize">
           {`Delivery Challan ${current}`}
-        </h1>
+        </h1> */}
         <div className="flex gap-4">
           <div
             className="flex gap-2 items-center"
@@ -62,7 +69,7 @@ const page = () => {
           </div>
         </div>
       </div>
-      <div className="flex justify-end items-center">
+      {/* <div className="flex justify-end items-center">
        
         <form>
           <input
@@ -72,18 +79,40 @@ const page = () => {
             className="text-md outline-1 border-1 focus:ring-0 rounded-md w-[300px] text-sm"
           />
         </form>
-      </div>
+      </div> */}
       {current === 'sales' ? (
-        <div>
-        <div>
-        <h1 className="text-xl capitalize text-center">Pending Sales Order List</h1>
-          <SalesPendingList />
-        </div>
-          <div>
-            <h1 className="text-xl capitalize text-center">Complete Challan List</h1>
-            <SalesList />
+      <div className="min-h-screen bg-gray-50 ">
+      <div className="max-w-7xl mx-auto">
+        {/* Tab Navigation */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 mb-6">
+          <div className="flex border-b border-gray-200">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id)}
+                className={`
+                  flex-1 px-6 py-4 text-sm font-semibold transition-colors relative
+                  ${activeTab === tab.id
+                    ? 'text-primary1 border-b-2 border-primary1 bg-blue-50'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                  }
+                `}
+              >
+                {tab.label}
+                {activeTab === tab.id && (
+                  <span className="absolute bottom-0 left-0 right-0 h-0.5 " />
+                )}
+              </button>
+            ))}
           </div>
         </div>
+
+        {/* Content Area */}
+        <div className="bg-white">
+        {ActiveComponent}
+        </div>
+      </div>
+    </div>
       ) : (
         <div>
         <div>

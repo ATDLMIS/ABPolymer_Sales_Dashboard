@@ -9,7 +9,7 @@ const page = () => {
 
 	return (
 		<div>
-			<div className='flex gap-8 items-center mb-5'>
+			<div className='flex gap-8 items-center mb-5 ml-3'>
 				<h1 className='text-2xl capitalize'>
 					{current === "sales" ? "sales order list" : "Speciman Order List"}
 				</h1>
@@ -65,7 +65,7 @@ const page = () => {
 			<div className='flex justify-between items-center'>
 				{current === "sales" ? (
 					<Link href='/dashboard/sales-order/add/sales'>
-						<button className='capitalize bg-primary1 px-2 py-1 text-white rounded-md ml-5'>
+						<button className='capitalize bg-primary1 px-2 py-1 text-white rounded-md ml-3'>
 							Add Sales Order
 						</button>
 					</Link>

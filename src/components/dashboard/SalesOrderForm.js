@@ -17,15 +17,18 @@ import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 
 
 const SalesOrderForm = ({ session }) => {
-  const [CategoryId, setCategoryId] = useState('');
   const [open, setOpen] = useState(false);
   const [allRetailers, setAllRetailers] = useState([]);
-  const[partyDetails,setPartyDetails]=useState({});
-   const [refreshKey, setRefreshKey] = useState(0);
-   const [retailerName, setRetailerName] = useState('N/A');
-   const [retailerId, setRetailerId] = useState(null);
-   const [validationError, setValidationError] = useState('');
-     const router = useRouter();
+  const [partyDetails,setPartyDetails]=useState({});
+  const [refreshKey, setRefreshKey] = useState(0);
+  const [retailerName, setRetailerName] = useState('N/A');
+  const [retailerId, setRetailerId] = useState(null);
+  const [validationError, setValidationError] = useState('');
+  const [discountPolicy, setDiscountPolicy] = useState([]);
+  const [allProducts, setAllProducts] = useState([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const router = useRouter();
+  
   const [formData, setFormData] = useState({
     SalesOrderNo: '',
     OrderDate: new Date().toISOString().split('T')[0],
@@ -33,6 +36,7 @@ const SalesOrderForm = ({ session }) => {
     OutletID: '', // Selected retailer ID in header
     TotalAmount: '',
     DiscountPercentage: 0,
+    AppDisPercent: 0,
     DiscountAmount: 0,
     FinalAmount: 0,
     UserID: session.user.id,
@@ -42,17 +46,53 @@ const SalesOrderForm = ({ session }) => {
         id: uuidv4(),
         ProductCategoryID: '',
         ProductID: '',
-        RetailerID: '', // Will be set when user selects retailer
         Quantity: '',
         Price: '',
         TotalPrice: 0,
+        ProductName: '',
+        ProductCategory: '',
       },
     ],
   });
   const [loading, setLoading] = useState(false);
 
-  // Remove all automatic retailer assignment
-  // Rows will ONLY get RetailerID when they are created with "Add Product" button
+  // Fetch discount policy
+  useEffect(() => {
+    const fetchDiscountPolicy = async () => {
+      try {
+        const res = await Axios.get('?action=get_SalesDiscount');
+        if (res.data && res.data.DiscountPolicy) {
+          setDiscountPolicy(res.data.DiscountPolicy);
+        }
+      } catch (error) {
+        console.error('Error fetching discount policy:', error);
+      }
+    };
+    
+    fetchDiscountPolicy();
+  }, []);
+
+  // Fetch all products
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      setLoadingProducts(true);
+      try {
+        const res = await Axios.get('?action=get_products');
+        if (res.data && res.data.success) {
+          setAllProducts(res.data.data || []);
+        } else {
+          setAllProducts([]);
+        }
+      } catch (error) {
+        console.error('Error fetching products:', error);
+        setAllProducts([]);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+    
+    fetchAllProducts();
+  }, []);
 
   // Calculate totals and discount whenever order details change
   useEffect(() => {
@@ -68,6 +108,7 @@ const SalesOrderForm = ({ session }) => {
       ...prevState,
       TotalAmount: total,
       DiscountPercentage: discountResult.discountPercentage,
+      AppDisPercent: discountResult.discountPercentage,
       DiscountAmount: discountResult.discountAmount,
       FinalAmount: discountResult.finalAmount,
     }));
@@ -75,9 +116,6 @@ const SalesOrderForm = ({ session }) => {
 
   const allParties = useGetData(
     `?action=get_parties_users&UserID=${session.user.id}`
-  );
-  const bookGroups = useGetData(
-    '?action=get_bookscategorys'
   );
 
   const getOrderId = async () => {
@@ -90,31 +128,25 @@ const SalesOrderForm = ({ session }) => {
     });
   };
 
-  const [books, setBooks] = useState([]);
-  const getBooksByCategoryId = async () => {
-    const res = await Axios.get(
-      `?action=get_productcategorywise&Categoryid=${CategoryId}`
-    );
-    setBooks([...res.data]);
-  };
-
-  useEffect(() => {
-    getBooksByCategoryId();
-  }, [CategoryId]);
-
-  const getPrice = async (item, { name, value }) => {
+  const getPrice = async (item, productId) => {
     try {
       const res = await Axios.get(
-        `?action=get_productrate&FinancialYearID=${session?.user?.financialYearId}&ProductID=${value}`
+        `?action=get_productrate&FinancialYearID=${session?.user?.financialYearId}&ProductID=${productId}`
       );
 
+      // Find the selected product to get category info
+      const selectedProduct = allProducts.find(p => String(p.ProductID) === String(productId));
+      
       setFormData({
         ...formData,
         orderDetails: formData.orderDetails.map(detail =>
           detail.id === item.id
             ? {
                 ...detail,
-                [name]: value,
+                ProductID: productId,
+                ProductCategoryID: selectedProduct?.Categoryid || '',
+                ProductCategory: selectedProduct?.ProductCategory || '',
+                ProductName: selectedProduct?.ProductName || '',
                 Price: res.data.Rate ? res.data.Rate : '',
                 TotalPrice: Number(detail.Quantity || 0) * Number(res.data.Rate || 0),
               }
@@ -130,26 +162,34 @@ const SalesOrderForm = ({ session }) => {
     getOrderId();
   }, []);
 
-  const updateOrderDetails = (event, itemId) => {
-    setFormData({
-      ...formData,
-      orderDetails: formData.orderDetails.map(detail =>
-        detail.id === itemId
-          ? { ...detail, [event.target.name]: event.target.value }
-          : detail
-      ),
-    });
-  };
-
-  const updateOrderDetailBook = (event, item) => {
+  const updateOrderDetailProduct = (event, item) => {
     const value = event.target.value;
     const name = event.target.name;
 
     if (value) {
-      getPrice(item, { name, value });
+      getPrice(item, value);
+    } else {
+      // Clear product selection
+      setFormData({
+        ...formData,
+        orderDetails: formData.orderDetails.map(detail =>
+          detail.id === item.id
+            ? {
+                ...detail,
+                ProductID: '',
+                ProductCategoryID: '',
+                ProductCategory: '',
+                ProductName: '',
+                Price: '',
+                TotalPrice: 0,
+              }
+            : detail
+        ),
+      });
     }
   };
-const getRetailerName = (retailerId) => {
+
+  const getRetailerName = (retailerId) => {
     if (!retailerId) return 'N/A';
     if (!allRetailers || allRetailers.length === 0) return 'No retailers loaded';
     
@@ -172,9 +212,11 @@ const getRetailerName = (retailerId) => {
     
     return `ID: ${retailerId}`;
   };
-useEffect(() => {
-   getRetailerName(formData.OutletID);
-},[formData.OutletID]);
+
+  useEffect(() => {
+    getRetailerName(formData.OutletID);
+  },[formData.OutletID]);
+
   // Get party details with type conversion
   const getPartyDetails = async() => {
     if (!formData.PartyID ) return null;
@@ -187,9 +229,11 @@ useEffect(() => {
       return party;
     }
   };
-useEffect(() => {
-  getPartyDetails();
-}, [formData.PartyID]);
+
+  useEffect(() => {
+    getPartyDetails();
+  }, [formData.PartyID]);
+
   // Get selected retailer details
   const getSelectedRetailerDetails = () => {
     if (!formData.OutletID || !allRetailers || allRetailers.length === 0) return null;
@@ -218,13 +262,8 @@ useEffect(() => {
     for (let i = 0; i < formData.orderDetails.length; i++) {
       const detail = formData.orderDetails[i];
       
-      if (!detail.ProductCategoryID || detail.ProductCategoryID === '') {
-        setValidationError(`Row ${i + 1}: Please select a Product Category.`);
-        return false;
-      }
-      
       if (!detail.ProductID || detail.ProductID === '') {
-        setValidationError(`Row ${i + 1}: Please select a Product Name.`);
+        setValidationError(`Row ${i + 1}: Please select a Product.`);
         return false;
       }
 
@@ -247,29 +286,32 @@ useEffect(() => {
     }
 
     setLoading(true);
-   const userData = {
-  SalesOrderNo: formData.SalesOrderNo,
-  OrderDate: formData.OrderDate,
-  PartyID: Number(formData.PartyID),
-  TotalAmount: Number(formData.TotalAmount),
-  DiscountAmount: Number(formData.DiscountAmount),
-  DiscountPercentage: Number(formData.DiscountPercentage),
-  UserID: Number(formData.UserID),
-  SpecimenUserID: null,
-  orderDetails: formData.orderDetails.map(detail => ({
-    FinancialYearID: Number(session?.user?.financialYearId),
-    ProductCategoryID: Number(detail.ProductCategoryID),
-    ProductID: Number(detail.ProductID),
-    Quantity: Number(detail.Quantity),
-    Price: Number(detail.Price),
-  }))
-};
+    const userData = {
+      SalesOrderNo: formData.SalesOrderNo,
+      OrderDate: `${formData.OrderDate} 00:00:00`,
+      PartyID: Number(formData.PartyID),
+      OutletID: Number(formData.OutletID),
+      TotalAmount: Number(formData.TotalAmount),
+      DiscountAmount: Number(formData.DiscountAmount),
+      DiscountPercentage: Number(formData.DiscountPercentage),
+      AppDisPercent: Number(formData.AppDisPercent),
+      UserID: Number(formData.UserID),
+      SpecimenUserID: null,
+      orderDetails: formData.orderDetails.map(detail => ({
+        FinancialYearID: Number(session?.user?.financialYearId),
+        ProductCategoryID: Number(detail.ProductCategoryID),
+        ProductID: Number(detail.ProductID),
+        Quantity: Number(detail.Quantity),
+        Price: Number(detail.Price),
+      }))
+    };
+    
     try {
       const res = await Axios.post(
         '?action=create_order',
         userData
       );
-      console.log( res.data);
+      console.log('Order created:', res.data);
       router.push('/dashboard/sales-order');
     } catch (error) {
       console.error('Error creating order:', error);
@@ -279,7 +321,22 @@ useEffect(() => {
     }
   };
 
-  
+  // Format discount policy for display
+  const formatDiscountPolicy = () => {
+    if (!discountPolicy || discountPolicy.length === 0) {
+      return [];
+    }
+    
+    return discountPolicy.map(policy => {
+      // Remove extra formatting and make it cleaner
+      return policy
+        .replace('if Total Amount is >= ', 'if Total Amount >= ')
+        .replace('then ', 'then ')
+        .replace('.00', '')
+        .replace(/\s+/g, ' ')
+        .trim();
+    });
+  };
 
   return (
     <>
@@ -309,8 +366,6 @@ useEffect(() => {
             />
 
             <div>
-            
-                
               <FormSelect
                 label="Party Name"
                 id="PartyID"
@@ -323,7 +378,6 @@ useEffect(() => {
                 searchKeys={['PartyName', 'PartyID', 'ID']}
                 required={true}
               />
-              
               
               {/* Party Details - Show below dropdown */}
               {Object.keys(partyDetails).length > 0 && (
@@ -352,7 +406,6 @@ useEffect(() => {
             </div>
 
             <div>
-            
               <RetailerById
                 partyID={formData.PartyID}
                 setFormData={setFormData}
@@ -386,8 +439,8 @@ useEffect(() => {
                   </div>
                 </div>
               )}
-                  {
-              open ? (
+                  
+              {open ? (
                 <RetailerModalForm
                   partyID={formData.PartyID}
                   setAllRetailers={setAllRetailers}
@@ -406,25 +459,20 @@ useEffect(() => {
                     Add Retailer
                   </button>
                 </div>
-              )
-            }
+              )}
             </div>
-
-        
           </div>
 
           {/* Order Details */}
-          <div className="border rounded-xl bg-gray-50  shadow-inner mt-6">
-
+          <div className="border rounded-xl bg-gray-50 shadow-inner mt-6">
             <div className="">
-              <table className="w-full text-sm ">
+              <table className="w-full text-sm">
                 <thead className="bg-primary1 text-white">
                   <tr>
-                    <th className="w-[40%] px-1 py-1 text-center font-normal">Product Name</th>
-                    <th className="w-[20%] px-1 py-2 text-center font-normal">Product Type</th>
-                    <th className="w-[12%] px-1 py-1 text-center font-normal">Qty</th>
-                    <th className="w-[6%] px-1 py-1 text-center font-normal">Price</th>
-                    <th className="w-[8%] px-1 py-1 text-center font-normal">Amount</th>
+                    <th className="w-[60%] px-1 py-1 text-center font-normal">Product</th>
+                    <th className="w-[12%] px-1 py-2 text-center font-normal">Qty</th>
+                    <th className="w-[8%] px-1 py-1 text-center font-normal">Price</th>
+                    <th className="w-[10%] px-1 py-1 text-center font-normal">Amount</th>
                     <th className="w-[10%] px-1 py-1 text-center font-normal">Action</th>
                   </tr>
                 </thead>
@@ -432,35 +480,28 @@ useEffect(() => {
                 <tbody>
                   {formData.orderDetails.map((item) => (
                     <tr key={item.id} className="border-b hover:bg-gray-100 transition">
-                       {/* PRODUCT NAME (COMPONENT) */}
+                      {/* PRODUCT SELECTION - Single Combo Box */}
                       <td className="px-3 py-3">
-                        <ProductById name="ProductID" item={item} update={updateOrderDetailBook} />
-                      </td>
-                      {/* PRODUCT CATEGORY */}
-                      <td className="px-1 py-1">
                         <FormSelect
-                          id="ProductCategoryID"
-                          value={item.ProductCategoryID}
-                          onChange={(e) => {
-                            updateOrderDetails(e, item.id);
-                            setCategoryId(e.target.value);
-                          }}
-                          options={bookGroups.data || []}
-                          valueKey="ID"
-                          labelKey="CategoryName"
-                          placeholder='Category'
-                          searchKeys={['CategoryName']}
-                          
+                          id={`ProductID_${item.id}`}
+                          name="ProductID"
+                          value={item.ProductID}
+                          onChange={(e) => updateOrderDetailProduct(e, item)}
+                          options={allProducts || []}
+                          valueKey="ProductID"
+                          labelKey="ProductName"
+                          placeholder={loadingProducts ? 'Loading products...' : 'Select Product'}
+                          searchKeys={['ProductName', 'ProductCode', 'ProductCategory']}
+                          searchable={true}
+                          disabled={loadingProducts}
                         />
                       </td>
-
-                     
 
                       {/* QTY */}
                       <td className="px-1 py-2 text-center">
                         <FormInput
-                        px='px-4'
-                        py="py-1.6"
+                          px='px-4'
+                          py="py-1.6"
                           value={item.Quantity}
                           name="Quantity"
                           placeholder='Qty'
@@ -479,21 +520,20 @@ useEffect(() => {
                             })
                           }
                         />
-
                       </td>
 
                       {/* PRICE */}
                       <td className="px-1 py-1 text-center">
-                        <span className="font-semibold">{item.Price ? item.Price : "-"}</span>
+                        <span className="font-semibold">{item.Price ? formatAmountWithCommas(item.Price) : "-"}</span>
                       </td>
 
                       {/* TOTAL */}
                       <td className="px-1 py-1 text-center font-semibold text-green-600">
-                        {item.TotalPrice || 0}
+                        {item.TotalPrice ? formatAmountWithCommas(item.TotalPrice) : "0"}
                       </td>
 
                       {/* REMOVE ROW */}
-                      <td className="px-7 py-1   text-center flex justify-center items-center gap-2">
+                      <td className="px-7 py-1 text-center flex justify-center items-center gap-2">
                         <AiOutlineCloseCircle
                           className="text-2xl mt-6 text-red-500 cursor-pointer hover:scale-110 transition mx-auto"
                           onClick={() =>
@@ -507,88 +547,75 @@ useEffect(() => {
                         />
                         
                         <AiOutlinePlus 
-                           className="text-xl mt-6 text-white bg-green-500 rounded-full cursor-pointer hover:scale-110 transition mx-auto"
+                          className="text-xl mt-6 text-white bg-green-500 rounded-full cursor-pointer hover:scale-110 transition mx-auto"
                           onClick={() =>
-                          setFormData({
-                            ...formData,
-                            orderDetails: [
-                              ...formData.orderDetails,
-                              {
-                                id: uuidv4(),
-                                FinancialYearID:session?.user?.financialYearId,
-                                ProductCategoryID: "",
-                                ProductID: "",
-                                RetailerID: formData.OutletID || "", // Capture current OutletID
-                                Quantity: "",
-                                Price: "",
-                                TotalPrice: 0,
-                              },
-                            ],
-                          })
-                        }
+                            setFormData({
+                              ...formData,
+                              orderDetails: [
+                                ...formData.orderDetails,
+                                {
+                                  id: uuidv4(),
+                                  FinancialYearID: session?.user?.financialYearId,
+                                  ProductCategoryID: "",
+                                  ProductID: "",
+                                  RetailerID: formData.OutletID || "",
+                                  Quantity: "",
+                                  Price: "",
+                                  TotalPrice: 0,
+                                  ProductName: "",
+                                  ProductCategory: "",
+                                },
+                              ],
+                            })
+                          }
                         />
                       </td>
                     </tr>
                   ))}
 
-                  {/* DISCOUNT AND TOTAL ROWS */}
-                  <tr className="bg-gray-100 font-semibold">
-                    <td colSpan={5} className="px-4 py-3 text-right">
-                      Sub Total:
+                  {/* Summary Row with Discount Policy */}
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 align-top">
+                      {/* Discount Policy Section */}
+                      <div className="border rounded-lg p-4 bg-gray-50">
+                        <h4 className="text-sm font-semibold mb-2 text-gray-700">Discount Policy:</h4>
+                        <ul className="space-y-1 text-xs text-gray-600">
+                          {formatDiscountPolicy().map((policy, index) => (
+                            <li key={index} className="flex items-start">
+                              <span className="font-medium mr-1">{index + 1}.</span>
+                              <span>{policy}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     </td>
-                    <td className="px-4 py-3 text-center" colSpan={2}>
-                      {formatAmountWithCommas(formData.TotalAmount) || '0.00'}
+                    
+                    <td colSpan={3} className="px-4 py-3 align-top">
+                      {/* Financial Summary */}
+                      <div className="border rounded-lg p-4 bg-white">
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-semibold text-gray-700">Sub Total:</span>
+                          <span className="font-semibold">{formatAmountWithCommas(formData.TotalAmount) || '0.00'}</span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center mb-2">
+                          <span className="font-semibold text-gray-700">
+                            Discount ({formData.DiscountPercentage}%):
+                          </span>
+                          <span className="font-semibold text-green-700">
+                            {formatAmountWithCommas(formData.DiscountAmount) || '0.00'}
+                          </span>
+                        </div>
+                        
+                        <div className="flex justify-between items-center pt-2 border-t border-gray-300">
+                          <span className="font-semibold text-gray-800">Final Amount:</span>
+                          <span className=" font-semibold text-green-700">
+                            {formatAmountWithCommas(formData.FinalAmount) || '0.00'}
+                          </span>
+                        </div>
+                      </div>
                     </td>
                   </tr>
-                  
-                  <tr className="bg-blue-50 font-semibold">
-                    <td colSpan={5} className="px-4 py-3 text-right">
-                      Discount ({formData.DiscountPercentage}%):
-                    </td>
-                    <td className="px-4 py-3 text-center text-green-700" colSpan={2}>
-                       {formatAmountWithCommas(formData.DiscountAmount) || '0.00'}
-                    </td>
-                  </tr>
-                  
-                  <tr className="bg-green-50 font-semibold border-t-2 border-gray-300">
-                    <td colSpan={5} className="px-4 py-3 text-right text-lg">
-                      Final Amount:
-                    </td>
-                    <td className="px-4 py-3 text-center text-lg text-green-700" colSpan={2}>
-                      {formatAmountWithCommas(formData.FinalAmount) || '0.00'}
-                    </td>
-                  </tr>
-
-                  {/* ADD ROW */}
-                  {/* <tr>
-                    <td colSpan={7} className="py-4 text-right">
-                      <button
-                        type="button"
-                        className="px-4 py-2 bg-green-500 text-white rounded-lg shadow hover:bg-green-600 transition"
-                        onClick={() =>
-                          setFormData({
-                            ...formData,
-                            orderDetails: [
-                              ...formData.orderDetails,
-                              {
-                                id: uuidv4(),
-                                FinancialYearID:session?.user?.financialYearId,
-                                ProductCategoryID: "",
-                                ProductID: "",
-                                RetailerID: formData.OutletID || "", // Capture current OutletID
-                                Quantity: "",
-                                Price: "",
-                                TotalPrice: 0,
-                              },
-                            ],
-                          })
-                        }
-                      >
-                        <AiOutlinePlus className="inline mr-1" />
-                        Add Product
-                      </button>
-                    </td>
-                  </tr> */}
                 </tbody>
               </table>
             </div>

@@ -158,6 +158,13 @@ const NavItem = ({ session }) => {
       type: 'main'
     },
     {
+      name: 'TripRegister',
+      displayName: 'Trip Register',
+      icon: MapPin,
+      href: '/dashboard/trip-register',
+      type: 'main'
+    },
+    {
       name: 'Delivery Challan',
       displayName: 'Delivery Challan',
       icon: Truck,

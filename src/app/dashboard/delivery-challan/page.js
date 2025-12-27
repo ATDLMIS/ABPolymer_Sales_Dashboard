@@ -1,9 +1,9 @@
 'use client';
-import { useState } from 'react';
 import SalesList from '@/components/delivery-chalan/SalesList';
-import SpecimanList from '@/components/delivery-chalan/SpecimanList';
 import SalesPendingList from '@/components/delivery-chalan/SalesPendingList';
+import SpecimanList from '@/components/delivery-chalan/SpecimanList';
 import SpecimanPendingList from '@/components/delivery-chalan/SpecimanPendingList';
+import { useState } from 'react';
 
 const page = () => {
   const [current, setCurrent] = useState('sales');

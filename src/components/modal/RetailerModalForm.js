@@ -3,6 +3,7 @@ import FormInput from "../fromField/FormInput";
 import Axios from "@/utils/axios";
 
 export default function RetailerModalForm({open, setOpen, partyID, UserID,setRefreshKey}) {
+  console.log("Retailer Modal PartyID:", partyID);
   const [formData, setFormData] = useState({
     RetailerCode: '',
     RetailerName: '',
@@ -13,6 +14,7 @@ export default function RetailerModalForm({open, setOpen, partyID, UserID,setRef
     status: true
   });
 
+
     // Update form state
   const handleInputChange = (field, value) => {
    setFormData({...formData, [field]: value});
@@ -20,13 +22,14 @@ export default function RetailerModalForm({open, setOpen, partyID, UserID,setRef
   const handleSubmit = async(e) => {
     e.preventDefault();
     const res = await Axios.post(`?action=create_retailers&PartyID=${partyID}`, formData);
+    console.log("Retailer creation response:", res.data);
     if (res.status === 200) {
        setRefreshKey(prev => prev + 1);
        setOpen(false);
     }
   }
   return (
-    <div className="w-full h-screen flex items-center justify-center">
+    <div className="w-full h-screen flex items-center justify-center fixed top-0 left-0 z-50">
 
       {open && (
         <div

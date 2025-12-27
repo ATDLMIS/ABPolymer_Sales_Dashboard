@@ -1,320 +1,718 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, use } from 'react';
 import convertDateFormat from '@/utils/convertDateFormat';
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 import useGetData from '@/utils/useGetData';
 import Axios from '@/utils/axios';
+import Loading from '@/components/Loading';
+import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
+/* ────────────────────────────────────────
+   Reusable Components
+──────────────────────────────────────── */
+
+// Info Row
+const InfoRow = ({ label, value, highlighted = false, className = '' }) => (
+  <div className={`flex flex-wrap justify-between items-center py-2 border-b last:border-b-0 border-gray-200 ${className}`}>
+    <span className="text-gray-600 font-medium text-sm">{label}</span>
+    <span className={`text-sm ${highlighted ? 'font-semibold text-primary1' : 'text-gray-800'}`}>
+      {value || 'N/A'}
+    </span>
+  </div>
+);
+
+// Status Badge
+const StatusBadge = ({ status }) => {
+  const colors = {
+    Approved: 'bg-green-100 text-green-700 border-green-200',
+    Pending: 'bg-yellow-100 text-yellow-700 border-yellow-200',
+    Rejected: 'bg-red-100 text-red-700 border-red-200',
+    Cancelled: 'bg-gray-100 text-gray-700 border-gray-200',
+    'Pending Authorized': 'bg-orange-100 text-orange-700 border-orange-200',
+    Completed: 'bg-blue-100 text-blue-700 border-blue-200',
+    Authorized: 'bg-blue-100 text-blue-700 border-blue-200',
+  };
+  return (
+    <span className={`px-4 py-2 rounded-full text-sm font-semibold border ${colors[status] || 'bg-blue-100 text-blue-700 border-blue-200'}`}>
+      {status}
+    </span>
+  );
+};
+
+// Card
+const Card = ({ children, className = '' }) => (
+  <div className={`bg-white rounded-xl shadow-sm border border-gray-200 p-6 ${className}`}>
+    {children}
+  </div>
+);
+
+// Section Header
+const SectionHeader = ({ title, className = '' }) => (
+  <h2 className={`text-xl font-semibold text-gray-800 ${className}`}>{title}</h2>
+);
+
+// Approval Section
+const ApprovalSection = ({ label, comments, by, date }) => (
+  <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+    <h3 className="text-sm font-semibold text-gray-700 pb-2 border-b mb-3">
+      {label}
+    </h3>
+    <div className="space-y-2">
+      <InfoRow label="Date" value={date} />
+      <InfoRow label={`${label} By`} value={by} />
+      <InfoRow label="Comments" value={comments} />
+    </div>
+  </div>
+);
+
+// Empty State
+const EmptyState = ({ message }) => (
+  <div className="text-center py-8">
+    <p className="text-gray-500 font-medium">{message}</p>
+  </div>
+);
+
+/* ────────────────────────────────────────
+   Order Items Table (Updated - Financial Year column removed)
+──────────────────────────────────────── */
+
+const OrderItemsTable = ({ orderDetails, order, updatedDiscountPercentage = null, approvedDiscountPercentage = null }) => {
+  const subtotal = orderDetails.reduce(
+    (sum, item) => sum + (parseFloat(item.Price) * parseInt(item.Quantity)),
+    0
+  );
+
+  // Use updated discount percentage if provided, otherwise use existing
+  const discountPercentage = updatedDiscountPercentage !== null 
+    ? updatedDiscountPercentage 
+    : parseFloat(order?.DiscountPercentage) || 0;
+  
+  // Use approved discount percentage if provided, otherwise use existing
+  const appDiscountPercentage = approvedDiscountPercentage !== null
+    ? approvedDiscountPercentage
+    : parseFloat(order?.AppDisPercent) || 0;
+  
+  // Calculate discount amount based on subtotal
+  const discountAmount = subtotal * (discountPercentage / 100);
+  const netAmount = subtotal - discountAmount;
+  
+  // Calculate approved discount amount based on net amount
+  const appDiscountAmount = netAmount * (appDiscountPercentage / 100);
+  const grandTotal = netAmount - appDiscountAmount;
+
+  return (
+    <Card>
+      <SectionHeader title="Order Items" className="mb-6" />
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full min-w-full">
+          <thead>
+            <tr className="bg-gray-100 text-sm text-gray-700">
+              <th className="px-6 py-4 text-left font-medium">Product Name</th>
+              <th className="px-6 py-4 text-right font-medium">Qty</th>
+              <th className="px-6 py-4 text-right font-medium">Price</th>
+              <th className="px-6 py-4 text-right font-medium">Total</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {orderDetails.map(item => (
+              <tr key={item.SL} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                  {item.ProductName}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  {item.Quantity}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900 text-right">
+                  ৳{formatAmountWithCommas(parseFloat(item.Price))}
+                </td>
+                <td className="px-6 py-4 text-sm font-semibold text-gray-900 text-right">
+                  ৳{formatAmountWithCommas(parseFloat(item.Price) * parseInt(item.Quantity))}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+          <tfoot className="bg-gray-50">
+            <tr className="border-t border-gray-200">
+              <td colSpan="3" className="px-6 py-4 text-right font-semibold text-gray-700">
+                Total Amount:
+              </td>
+              <td className="px-6 py-4 text-right font-semibold text-gray-900">
+                ৳{formatAmountWithCommas(subtotal)}
+              </td>
+            </tr>
+            {discountPercentage > 0 && (
+              <tr className="border-t border-gray-200">
+                <td colSpan="3" className="px-6 py-4 text-right font-semibold text-gray-700">
+                  Discount ({discountPercentage}%):
+                </td>
+                <td className="px-6 py-4 text-right font-semibold text-red-600">
+                  -৳{formatAmountWithCommas(discountAmount)}
+                </td>
+              </tr>
+            )}
+            <tr className="border-t border-gray-200 bg-blue-50">
+              <td colSpan="3" className="px-6 py-4 text-right font-semibold text-blue-700">
+                Net Amount:
+              </td>
+              <td className="px-6 py-4 text-right font-semibold text-blue-700">
+                ৳{formatAmountWithCommas(netAmount)}
+              </td>
+            </tr>
+            {appDiscountPercentage > 0 && (
+              <tr className="border-t border-gray-200">
+                <td colSpan="3" className="px-6 py-4 text-right font-semibold text-gray-700">
+                  Approved Discount ({appDiscountPercentage}%):
+                </td>
+                <td className="px-6 py-4 text-right font-semibold text-red-600">
+                  -৳{formatAmountWithCommas(appDiscountAmount)}
+                </td>
+              </tr>
+            )}
+            <tr className="border-t-2 border-gray-300 bg-green-50">
+              <td colSpan="3" className="px-6 py-4 text-right font-bold text-gray-800 text-lg">
+                Grand Total:
+              </td>
+              <td className="px-6 py-4 text-right font-bold text-green-700 text-lg">
+                ৳{formatAmountWithCommas(grandTotal)}
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </Card>
+  );
+};
+
+/* ────────────────────────────────────────
+   Approval History Card
+──────────────────────────────────────── */
+
+const ApprovalHistoryCard = ({ approvals }) => {
+  const hasApprovals =
+    approvals?.CheckedComments ||
+    approvals?.AuthComments ||
+    approvals?.AppComments ||
+    approvals?.RejectComments ||
+    approvals?.CancelledBy;
+
+  return (
+    <Card>
+      <SectionHeader title="Approval History" className="mb-6" />
+      {!hasApprovals ? (
+        <EmptyState message="No Approval History Available" />
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {approvals?.CheckedComments && (
+            <ApprovalSection
+              label="Checked"
+              comments={approvals.CheckedComments}
+              by={approvals.CheckedBy}
+              date={convertDateFormat(approvals.CheckedDate?.split(' ')[0])}
+            />
+          )}
+          {approvals?.AuthComments && (
+            <ApprovalSection
+              label="Authorized"
+              comments={approvals.AuthComments}
+              by={approvals.AuthBy}
+              date={convertDateFormat(approvals.AuthDate?.split(' ')[0])}
+            />
+          )}
+          {approvals?.AppComments && (
+            <ApprovalSection
+              label="Approved"
+              comments={approvals.AppComments}
+              by={approvals.AppBy}
+              date={convertDateFormat(approvals.AppDate?.split(' ')[0])}
+            />
+          )}
+          {approvals?.RejectComments && (
+            <ApprovalSection
+              label="Rejected"
+              comments={approvals.RejectComments}
+              by={approvals.RejectBy}
+              date={convertDateFormat(approvals.RejectDate?.split(' ')[0])}
+            />
+          )}
+          {approvals?.CancelledBy && (
+            <ApprovalSection
+              label="Cancelled"
+              comments={approvals.CanclledComments}
+              by={approvals.CancelledBy}
+              date={convertDateFormat(approvals.CancelledDate?.split(' ')[0])}
+            />
+          )}
+        </div>
+      )}
+    </Card>
+  );
+};
+
+/* ────────────────────────────────────────
+   Order Information Card (Updated)
+──────────────────────────────────────── */
+
+const OrderInfoCard = ({ order }) => {
+  const partyCode = order?.PartyCode || (order?.PartyName && order.PartyName.match(/\(([^)]+)\)/)?.[1]);
+
+  return (
+    <Card>
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+        <SectionHeader title="Order Information" />
+        <StatusBadge status={order?.Status || "Pending Approval"} />
+      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="space-y-1">
+          <InfoRow 
+            label="Order Date" 
+            value={convertDateFormat(order?.OrderDate)} 
+          />
+          <InfoRow 
+            label="Order No" 
+            value={order?.SalesOrderNo} 
+            highlighted 
+          />
+          <InfoRow 
+            label="Total Amount" 
+            value={`৳${formatAmountWithCommas(parseFloat(order?.TotalAmount?.replace(/,/g, '')) || 0)}`} 
+          />
+          <InfoRow 
+            label="Initial Discount" 
+            value={`${parseFloat(order?.DiscountPercentage) || 0}%`} 
+          />
+          <InfoRow 
+            label="Approved Discount" 
+            value={`${parseFloat(order?.AppDisPercent) || 0}%`} 
+          />
+        </div>
+        <div className="space-y-1">
+          <InfoRow 
+            label="Party Name" 
+            value={
+              <span className="font-semibold">
+                {order?.PartyName?.replace(/\([^)]*\)/, '')?.trim()}
+                {partyCode && <span className="text-primary1"> ({partyCode})</span>}
+              </span>
+            } 
+            highlighted 
+          />
+          <InfoRow 
+            label="Net Amount" 
+            value={`৳${formatAmountWithCommas(parseFloat(order?.NetAmount?.replace(/,/g, '')) || 0)}`} 
+            highlighted 
+          />
+          <InfoRow 
+            label="Grand Total" 
+            value={`৳${formatAmountWithCommas(parseFloat(order?.GrandTotal?.replace(/,/g, '')) || 0)}`} 
+            highlighted 
+          />
+          <div className="py-2 border-b border-gray-200">
+            <span className="text-gray-600 font-medium text-sm block mb-1">Contact Number</span>
+            <span className="text-gray-800 text-sm">{order?.ContactNumber}</span>
+          </div>
+        </div>
+      </div>
+    </Card>
+  );
+};
+
+/* ────────────────────────────────────────
+   Demand/Return Info Card
+──────────────────────────────────────── */
+
+const InfoSectionCard = ({ title, data }) => {
+  if (!data?.length) return null;
+
+  return (
+    <Card>
+      <SectionHeader title={title} className="mb-6" />
+      <div className="overflow-x-auto rounded-lg border border-gray-200">
+        <table className="w-full min-w-full">
+          <thead>
+            <tr className="bg-blue-600 text-white text-sm">
+              <th className="px-6 py-4 text-left font-medium">SL</th>
+              <th className="px-6 py-4 text-left font-medium">Product Name</th>
+              <th className="px-6 py-4 text-left font-medium">Product Details</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {data.map(item => (
+              <tr key={item.SL} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4 text-sm text-gray-900">{item.SL}</td>
+                <td className="px-6 py-4 text-sm text-gray-900 font-medium">
+                  {item.ProductName}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-900">
+                  {item.ProductsValue}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </Card>
+  );
+};
+
+/* ────────────────────────────────────────
+   Main Page Component (Updated)
+──────────────────────────────────────── */
+
 const Page = ({ params }) => {
-  const router = useRouter();
+   const { data: session, status } = useSession(); 
+    const userID = session?.user?.id
+    const id = params.id;
   const [formData, setFormData] = useState({
     SalesOrderID: '',
-    SalesOrderNo: '',
-    OrderDate: '',
-    PartyName: '',
-    orderDetails: [],
-    DemandInfo: 'Approved by management',
-    ReturnInfo: 'Approved by management',
-    AuthComments: '',
     AppComments: '',
     UserID: '',
+    DiscountPercentage: '',
+    AppDisPercent: '' // New field for approved discount
   });
-  const [viewableData, setViewableData] = useState({ status: 'pending', data: null });
 
-  const demandInfo = useGetData('?action=get_salesordersAutorizationMIS&SalesOrderID=27');
-  const returnInfo = useGetData('?action=get_salesordersAutorizationMISReturn&SalesOrderID=158');
+  const [orderData, setOrderData] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [updatingDiscount, setUpdatingDiscount] = useState(false);
+  const [currentAppDiscount, setCurrentAppDiscount] = useState(0);
+
+  const router = useRouter();
+  const demandInfo = useGetData(`?action=get_salesordersAutorizationMIS&SalesOrderID=${params.id}`);
+  const returnInfo = useGetData(`?action=get_salesordersAutorizationMISReturn&SalesOrderID=${params.id}`);
 
   const getData = async (id) => {
-    const res = await Axios.get(`?action=get_order&SalesOrderID=${id}`);
-    if (res.data.order) {
-      setViewableData({ status: 'idle', data: res.data });
-      setFormData((prev) => ({
-        ...prev,
-        SalesOrderID: res.data.order.SalesOrderID,
-        SalesOrderNo: res.data.order.SalesOrderNo,
-        OrderDate: res.data.order.OrderDate,
-        PartyName: res.data.order.PartyName,
-        orderDetails: res.data.orderDetails ?? [],
-        UserID: res.data.order.UserID,
-      }));
+    try {
+      setLoading(true);
+      const res = await Axios.get(`?action=get_order&SalesOrderID=${id}`);
+      
+      if (res.data.order) {
+        setOrderData(res.data);
+        const discount = parseFloat(res.data.order.DiscountPercentage) || 0;
+        const appDiscount = parseFloat(res.data.order.AppDisPercent) || 0;
+        setFormData(prev => ({
+          ...prev,
+          SalesOrderID: res.data.order.SalesOrderID,
+          UserID: res.data.order.UserID,
+          DiscountPercentage: discount.toString(),
+          AppDisPercent: appDiscount.toString() // Set approved discount
+        }));
+        setCurrentAppDiscount(appDiscount);
+      }
+    } catch (error) {
+      console.error('Error fetching order:', error);
+    } finally {
+      setLoading(false);
     }
   };
 
   useEffect(() => {
-    if (params.id) getData(params.id);
-  }, [params.id]);
+    if (id) getData(id);
+  }, [id]);
+
+  // Function to update approved discount via API
+  const updateApprovedDiscount = async (appDiscountPercentage) => {
+    try {
+      setUpdatingDiscount(true);
+      const payload = {
+        AppDisPercent: parseFloat(formData.AppDisPercent) || 0
+      };
+
+      const response = await Axios.put(
+        `?action=update_salesorder_discount&SalesOrderID=${formData.SalesOrderID}`, 
+        payload
+      );
+      // Update local state
+      setCurrentAppDiscount(parseFloat(formData.AppDisPercent));
+      
+      // Refresh data to get updated calculations
+      await getData(id);
+      
+      // Show success message
+      alert(`Approved discount updated to ${formData.AppDisPercent}% successfully!`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating approved discount:', error);
+      alert('Failed to update approved discount. Please try again.');
+      return false;
+    } finally {
+      setUpdatingDiscount(false);
+    }
+  };
 
   const handleAuthorize = async () => {
-    const payload = {
-      SalesOrderID: formData.SalesOrderID,
-      DemandInfo: formData.DemandInfo,
-      ReturnInfo: 'Approved for 90 units due to stock limitations',
-      AuthComments: null,
-      AppComments: formData.AppComments,
-      UserID: formData.UserID,
-    };
-    await Axios.post('?action=create_sndApprovalDetails', payload);
-    router.push('/dashboard/sales-order-approval');
+    try {
+      // First update approved discount if changed
+      const discountChanged = parseFloat(formData.AppDisPercent) !== currentAppDiscount;
+      if (discountChanged) {
+        const discountUpdated = await updateApprovedDiscount(formData.AppDisPercent);
+        if (!discountUpdated) {
+          return; // Don't proceed if discount update failed
+        }
+      }
+
+      // Then proceed with approval
+      const payload = {
+        SalesOrderID: formData.SalesOrderID,
+        DemandInfo: 'Approved by management',
+        ReturnInfo: 'Approved for 90 units due to stock limitations',
+        AuthComments: null,
+        AppComments: formData.AppComments,
+        UserID: userID,
+      };
+
+      await Axios.post('?action=create_sndApprovalDetails', payload);
+      router.push('/dashboard/sales-order-approval');
+    } catch (error) {
+      console.error('Approval failed:', error);
+      alert('Approval failed. Please try again.');
+    }
   };
 
   const handleReject = async () => {
-    const payload = {
-      SalesOrderID: formData.SalesOrderID,
-      RejectComments: formData.AppComments,
-      UserID: formData.UserID,
-    };
-    await Axios.post('?action=create_sndApprovalRejected_Cancelled', payload);
-    router.push('/dashboard/sales-order-approval');
+    try {
+      const payload = {
+        SalesOrderID: formData.SalesOrderID,
+        RejectComments: formData.AppComments,
+        UserID: formData.UserID,
+      };
+
+      await Axios.post('?action=create_sndApprovalRejected_Cancelled', payload);
+      router.push('/dashboard/sales-order-approval');
+    } catch (error) {
+      console.error('Rejection failed:', error);
+      alert('Rejection failed. Please try again.');
+    }
   };
 
-  const ApprovalBlock = ({ label, comments, by, date }) => (
-    <div className="relative overflow-hidden rounded-xl border border-gray-200 bg-gradient-to-br from-gray-50 to-white p-5 shadow-sm hover:shadow-md transition">
-      <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-br from-[#FF6F0B]/5 to-transparent rounded-bl-full"></div>
-      <div className="relative space-y-3">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1 h-6 bg-gradient-to-b from-[#FF6F0B] to-orange-600 rounded-full"></div>
-          <h3 className="text-base font-bold text-gray-800">{label}</h3>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
-          <div>
-            <p className="text-gray-500 text-xs mb-1">Date</p>
-            <p className="font-semibold text-gray-900">{date || 'N/A'}</p>
-          </div>
-          <div>
-            <p className="text-gray-500 text-xs mb-1">By</p>
-            <p className="font-semibold text-gray-900">{by || 'N/A'}</p>
-          </div>
-        </div>
-        <div className="pt-2 border-t border-gray-200">
-          <p className="text-gray-500 text-xs mb-1">Comments</p>
-          <p className="text-sm text-gray-700">{comments || 'N/A'}</p>
+  // Handle approved discount percentage change
+  const handleAppDiscountChange = (e) => {
+    const value = e.target.value;
+    // Allow empty string or numeric values
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setFormData(prev => ({
+        ...prev,
+        AppDisPercent: value
+      }));
+    }
+  };
+
+  // Calculate amounts for display
+  const calculateAmounts = () => {
+    if (!orderData?.orderDetails) {
+      return {
+        subtotal: 0,
+        discountAmount: 0,
+        netAmount: 0,
+        appDiscountAmount: 0,
+        grandTotal: 0
+      };
+    }
+
+    const { order, orderDetails } = orderData;
+    
+    // Calculate subtotal from order items
+    const subtotal = orderDetails.reduce(
+      (sum, item) => sum + (parseFloat(item.Price) * parseInt(item.Quantity)),
+      0
+    );
+    
+    // Get percentages
+    const discountPercentage = parseFloat(order?.DiscountPercentage) || 0;
+    const appDiscountPercentage = parseFloat(formData.AppDisPercent) || 0;
+    
+    // Calculate amounts
+    const discountAmount = subtotal * (discountPercentage / 100);
+    const netAmount = subtotal - discountAmount;
+    const appDiscountAmount = netAmount * (appDiscountPercentage / 100);
+    const grandTotal = netAmount - appDiscountAmount;
+
+    return {
+      subtotal,
+      discountPercentage,
+      discountAmount,
+      netAmount,
+      appDiscountPercentage,
+      appDiscountAmount,
+      grandTotal
+    };
+  };
+
+  if (loading) return <Loading />;
+
+  if (!orderData?.order) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="text-xl font-semibold text-gray-600 mb-2">Order Not Found</div>
+          <p className="text-gray-500">The requested sales order could not be found.</p>
         </div>
       </div>
-    </div>
-  );
+    );
+  }
 
-  const calculateTotal = () => formData.orderDetails.reduce(
-    (sum, item) => sum + Number(item.Price) * Number(item.Quantity),
-    0
-  );
+  const { order, orderDetails, approvals } = orderData;
+  const amounts = calculateAmounts();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 pb-36">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+    <div className="min-h-screen bg-gray-50 py-6">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        {/* Page Header */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
-            <h1 className="text-lg md:text-2xl font-semibold  text-gray-900 mb-1">
-              Sales Order Approval
-            </h1>
-            <p className="text-gray-600">Review, approve or reject sales orders</p>
+            <h1 className="text-3xl font-bold text-gray-900">Sales Order Approval</h1>
+            <p className="text-gray-600 mt-1">Review, approve or reject sales orders</p>
           </div>
-          <div className="relative w-full md:w-[300px]">
-            <input
-              type="text"
-              placeholder="Search order..."
-              className="border border-gray-300 pl-10 pr-4 py-3 rounded-xl w-full text-sm shadow-sm focus:ring-2 focus:ring-[#FF6F0B] focus:border-[#FF6F0B]"
-            />
-            <svg
-              className="w-5 h-5 absolute left-3 top-3.5 text-gray-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+
+          {/* <Link
+            href={`/dashboard/sales-order/preview/sales/${params.id}`}
+            className="inline-flex items-center px-6 py-3 bg-primary1 text-white font-medium rounded-lg hover:bg-primary1/90 transition-colors duration-200 shadow-sm"
+          >
+            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
             </svg>
-          </div>
+            Preview Order
+          </Link> */}
         </div>
 
-        {/* Order Info */}
-        <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8 mb-6 border border-gray-100">
-  
-          <div className="flex items-center gap-3 mb-6 pb-4 border-b border-gray-200">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#FF6F0B] to-orange-600 rounded-xl flex items-center justify-center">
-              <svg
-                className="w-6 h-6 text-white"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586l5.414 5.414V19a2 2 0 01-2 2z"
-                />
-              </svg>
-            </div>
-
-            <div>
-              <h2 className="text-xl font-bold text-gray-900">
-                Order Information
-              </h2>
-              <p className="text-sm text-gray-500">
-                Basic order details and party information
-              </p>
-            </div>
-          </div>
-             
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
-            {['SalesOrderNo', 'OrderDate', 'PartyName'].map(field => (
-              <div key={field}>
-                <label className="block text-xs font-semibold text-gray-600 mb-2">
-                  {field.replace(/([A-Z])/g, ' $1').trim()}
-                </label>
-                <input
-                  value={formData[field]}
-                  readOnly
-                  className="w-full border border-gray-200 rounded-xl px-4 py-3 bg-gray-50 focus:ring-2 focus:ring-[#FF6F0B] focus:border-[#FF6F0B]"
-                />
-              </div>
-            ))}
-          </div>          
-         
-          {/* Items Table */}
-          {formData.orderDetails.length > 0 && (
-            <div className="mt-8 overflow-x-auto rounded-xl border border-gray-200 shadow-sm">
-              <table className="w-full min-w-[600px] text-sm">
-                <thead>
-                  <tr className="bg-gradient-to-r from-[#FF6F0B] to-orange-600 text-white">
-                    <th className="px-6 py-4 text-left">Financial Year</th>
-                    <th className="px-6 py-4 text-left">Product Name</th>
-                    <th className="px-6 py-4 text-right">Qty</th>
-                    <th className="px-6 py-4 text-right">Price</th>
-                    <th className="px-6 py-4 text-right">Total</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-100">
-                  {formData.orderDetails.map(item => (
-                    <tr key={item.SL} className="hover:bg-gray-50">
-                      <td className="px-6 py-4">{item.FinancialYear}</td>
-                      <td className="px-6 py-4 font-medium">{item.ProductName}</td>
-                      <td className="px-6 py-4 text-right">{item.Quantity}</td>
-                      <td className="px-6 py-4 text-right">{formatAmountWithCommas(Number(item.Price))}</td>
-                      <td className="px-6 py-4 text-right font-semibold">{formatAmountWithCommas(Number(item.Price) * Number(item.Quantity))}</td>
-                    </tr>
-                  ))}
-                </tbody>
-                <tfoot>
-                  <tr className="bg-gray-50">
-                    <td colSpan="4" className="px-6 py-4 text-right font-bold">Grand Total:</td>
-                    <td className="px-6 py-4 text-right text-xl font-bold text-[#FF6F0B]">{calculateTotal()}</td>
-                  </tr>
-                </tfoot>
-              </table>
-            </div>
+        {/* Content Grid */}
+        <div className="space-y-6">
+          <OrderInfoCard order={order} />
+          
+          {orderDetails?.length > 0 && (
+            <OrderItemsTable
+              orderDetails={orderDetails}
+              order={order}
+              updatedDiscountPercentage={parseFloat(formData.DiscountPercentage) || 0}
+              approvedDiscountPercentage={parseFloat(formData.AppDisPercent) || 0}
+            />
           )}
-        </div>
 
-        {/* Approval Details */}
-        {viewableData.data && (
-          <div className="bg-white shadow-lg rounded-2xl p-6 sm:p-8 mb-6 border border-gray-100">
-               <div className="flex items-center gap-3 mb-6"> 
+          <ApprovalHistoryCard approvals={approvals} />
 
-                 <div className="w-10 h-10 bg-gradient-to-br from-green-500 to-green-600 rounded-xl flex items-center justify-center">
-                <svg
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  className="w-6 h-6 text-white"
-                >
-                  <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                </svg>
-              </div>
-            <div>
-                <h2 className="text-xl font-bold text-gray-900">Approval Details</h2>
-                <p className="text-sm text-gray-500">Authorization history</p>
-              </div>
-            <div className="grid grid-cols-1 gap-4">
-              {viewableData.data.approvals.CheckedComments && (
-                <ApprovalBlock
-                  label="Checked"
-                  comments={viewableData.data.approvals.CheckedComments}
-                  by={viewableData.data.approvals.CheckedBy}
-                  date={convertDateFormat(viewableData.data.approvals.CheckedDate.split(' ')[0])}
-                />
-              )}
-              {viewableData.data.approvals.AuthComments && (
-                <ApprovalBlock
-                  label="Authorized"
-                  comments={viewableData.data.approvals.AuthComments}
-                  by={viewableData.data.approvals.AuthBy}
-                  date={convertDateFormat(viewableData.data.approvals.AuthDate.split(' ')[0])}
-                />
-              )}
-              {viewableData.data.approvals.AppComments && (
-                <ApprovalBlock
-                  label="Approved"
-                  comments={viewableData.data.approvals.AppComments}
-                  by={viewableData.data.approvals.AppBy}
-                  date={convertDateFormat(viewableData.data.approvals.AppDate.split(' ')[0])}
-                />
-              )}
-            </div>
-               </div>
-             
-          </div>
-        )}
-
-        {/* Demand & Return Info */}
-        {[{ title: 'Demand Info', data: demandInfo.data }, { title: 'Return Info', data: returnInfo.data }].map((section, idx) => (
-          section.data?.length > 0 && (
-            <div key={idx} className="bg-white shadow-lg rounded-2xl p-6 sm:p-8 mb-6 border border-gray-100">
-              <h2 className="text-xl font-bold mb-4">{section.title}</h2>
-              <div className="overflow-x-auto rounded-xl">
-                <table className="w-full min-w-[500px] text-sm text-center">
-                  <thead className="bg-blue-600 text-white">
-                    <tr>
-                      <th className="px-6 py-4">SL</th>
-                      <th className="px-6 py-4">Product Name</th>
-                      <th className="px-6 py-4">Product Details</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-gray-100">
-                    {section.data.map(item => (
-                      <tr key={item.SL} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 font-medium">{item.SL}</td>
-                        <td className="px-6 py-4 font-medium">{item.ProductName}</td>
-                        <td className="px-6 py-4">{item.ProductsValue}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )
-        ))}
-
-      </div>
-
-      {/* Footer Actions */}
-      <div className="fixed bottom-0 left-0 md:left-[17%] right-0 bg-white shadow-xl border-t border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <textarea
-            rows={2}
-            placeholder="Enter your approval comments..."
-            value={formData.AppComments}
-            onChange={(e) => setFormData({ ...formData, AppComments: e.target.value })}
-            className="w-full md:flex-1 border border-gray-300 rounded-xl px-4 py-3 resize-none text-sm focus:ring-2 focus:ring-[#FF6F0B] focus:border-[#FF6F0B]"
+          <InfoSectionCard 
+            title="Demand Information" 
+            data={demandInfo.data} 
           />
-          <div className="flex flex-col sm:flex-row gap-4 md:w-1/3 md:justify-end">
-            <button
-              onClick={handleReject}
-              className="px-8 py-2 bg-red-500 text-white rounded-xl shadow-lg hover:scale-105 transition"
-            >
-              Reject Order
-            </button>
-            <button
-              onClick={handleAuthorize}
-              className="px-8 py-2 bg-gradient-to-r from-[#FF6F0B] to-orange-600 text-white rounded-xl shadow-lg hover:scale-105 transition"
-            >
-              Approved
-            </button>
-          </div>
+
+          <InfoSectionCard 
+            title="Return Information" 
+            data={returnInfo.data} 
+          />
         </div>
+
+        {/* Approval Actions */}
+        <Card className="mt-6 shadow-lg">
+          <SectionHeader title="Approval Actions" className="mb-6" />
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Left Column - Discount and Comments */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Approved Discount Percentage Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Approved Discount Percentage (%)
+                </label>
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    placeholder="Enter approved discount percentage"
+                    value={formData.AppDisPercent}
+                    onChange={handleAppDiscountChange}
+                    className="w-full max-w-xs border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary1 focus:border-primary1"
+                  />
+                  {updatingDiscount && (
+                    <span className="text-sm text-blue-600">Updating...</span>
+                  )}
+                </div>
+                <p className="text-sm text-gray-500 mt-1">
+                  Current approved discount: {currentAppDiscount}%
+                </p>
+              </div>
+
+              {/* Calculation Summary Box */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Calculation Summary</h4>
+                <div className="space-y-2">
+                  <InfoRow 
+                    label="Total Amount:" 
+                    value={`৳${formatAmountWithCommas(amounts.subtotal)}`} 
+                  />
+                  {amounts.discountPercentage > 0 && (
+                    <InfoRow 
+                      label={`Discount (${amounts.discountPercentage}%):`} 
+                      value={`-৳${formatAmountWithCommas(amounts.discountAmount)}`} 
+                      className="text-red-600"
+                    />
+                  )}
+                  <InfoRow 
+                    label="Net Amount:" 
+                    value={`৳${formatAmountWithCommas(amounts.netAmount)}`} 
+                    highlighted 
+                  />
+                  {parseFloat(formData.AppDisPercent) > 0 && (
+                    <InfoRow 
+                      label={`Approved Discount (${formData.AppDisPercent}%):`} 
+                      value={`-৳${formatAmountWithCommas(amounts.appDiscountAmount)}`} 
+                      className="text-red-600"
+                    />
+                  )}
+                  <div className="pt-2 border-t border-gray-300">
+                    <InfoRow 
+                      label="Grand Total:" 
+                      value={`৳${formatAmountWithCommas(amounts.grandTotal)}`} 
+                      highlighted 
+                      className="font-bold text-lg text-green-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Approval Comments
+                </label>
+                <textarea
+                  rows="3"
+                  placeholder="Enter your approval comments..."
+                  value={formData.AppComments}
+                  onChange={(e) => setFormData({ ...formData, AppComments: e.target.value })}
+                  className="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary1 focus:border-primary1 resize-none"
+                />
+              </div>
+            </div>
+
+            {/* Right Column - Action Buttons */}
+            <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:justify-end">
+              <button
+                onClick={handleReject}
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-colors duration-200 shadow-sm"
+              >
+                Reject Order
+              </button>
+              <button
+                onClick={handleAuthorize}
+                disabled={updatingDiscount}
+                className={`px-6 py-3 bg-gradient-to-r from-primary1 to-orange-600 text-white font-medium rounded-lg hover:from-orange-600 hover:to-orange-700 transition-colors duration-200 shadow-sm ${
+                  updatingDiscount ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {updatingDiscount ? 'Updating...' : 'Approve Order'}
+              </button>
+              
+             
+             
+            </div>
+          </div>
+        </Card>
       </div>
     </div>
   );

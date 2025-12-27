@@ -1,13 +1,26 @@
 "use client";
 import DataTable from '@/components/table/DataTable';
+import Axios from '@/utils/axios';
 import useGetData from '@/utils/axios';
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import { FaEye, FaRegEdit } from 'react-icons/fa';
 
 const page = () => {
    const url =
       '?action=get_bookscategorys';
-    const { status, data } = useGetData(url);
+      const [allCategory, setAllCategory] = useState([]);
+      const [isLoading, setIsLoading] = useState(false);
+    const getData = async () => {
+      setIsLoading(true);
+      const response = await Axios.get(url);
+      const result = response.data
+      setIsLoading(false);
+       return setAllCategory(result);
+    }
+    useEffect(() => {
+      getData();
+    }, []);
     // Define table columns
     const columns = [
       {
@@ -70,9 +83,9 @@ const page = () => {
        <div className="container mx-auto px-4 py-6">
         <DataTable
               columns={columns}
-              data={data}
-              isLoading={status === 'pending'}
-              error={status === 'error' ? 'Failed to load data' : null}
+              data={allCategory || []}
+              isLoading={isLoading}
+              error={null}
               emptyMessage="No data found"
             />
        </div>

@@ -97,7 +97,7 @@ const BookManagement = () => {
 
       <DataTable
         columns={columns}
-        data={data}
+        data={data?.data || []}
         isLoading={status === 'pending'}
         error={status === 'error' ? 'Failed to load products' : null}
         emptyMessage="No products found"

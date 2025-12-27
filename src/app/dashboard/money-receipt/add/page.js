@@ -1,7 +1,6 @@
 'use client';
 import { useState, useEffect } from 'react';
 import useGetData from '@/utils/useGetData';
-import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { useRouter } from 'next/navigation';
 import numberToWords from '@/utils/numberToWords';
@@ -10,30 +9,28 @@ import FormInput from '@/components/fromField/FormInput';
 import FormSelect from '@/components/fromField/FormSelect';
 import FormFileUpload from '@/components/fromField/FormFileUpload';
 import FormDatePicker from '@/components/fromField/FormDatePicker';
+import { useSession } from 'next-auth/react';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 const Page = () => {
   const router = useRouter();
-  const [userID, setUserID] = useState(null);
-    useEffect(() => {
-      const storedUserID = localStorage.getItem("UserID") || "defaultID";
-      setUserID(storedUserID);
-    }, []);
+  const { data: session, status } = useSession()
   const [formData, setFormData] = useState({
     MRNo: '',
     PartyID: '',
-    MRDate: new Date(),
+    MRDate: new Date().toISOString().split('T')[0],
     AmountReceived: '',
     InWord: '',
     PaymentMethodID: '',
     PaymentMethodDetailsID: '',
-    ReceivedByUserID: '',
-    ChallanCopyPath: null,
+    ReceivedByUserID: session.user.id,
+    DepositSlip: null,
     TransactionsNumber: '',
     MobileNumber: '',
     BranchName: '',
     DepositeName: '',
     Remarks: '',
   });
+  console.log('Form Data:', formData.MRDate);
   const [methodDetail, setMethodInDetails] = useState([]);
   useEffect(() => {
     if (formData.AmountReceived) {
@@ -60,7 +57,7 @@ const Page = () => {
     }
   };
 
-  const allParties = useGetData(`?action=get_parties_users&UserID=${userID}`);
+  const allParties = useGetData(`?action=get_parties_users&UserID=${session.user.id}`);
   const paymentMethod = useGetData('?action=get_PaymentMethod');
 
   useEffect(() => {
@@ -97,14 +94,14 @@ const Page = () => {
       const dataWillBeSubmitted = new FormData();
       dataWillBeSubmitted.append('MRNo', formData.MRNo);
       dataWillBeSubmitted.append('PartyID', formData.PartyID);
-      dataWillBeSubmitted.append('MRDate', formData.MRDate.toISOString().split('T')[0]);
+      dataWillBeSubmitted.append('MRDate', formData.MRDate);
       dataWillBeSubmitted.append('AmountReceived', formData.AmountReceived);
       dataWillBeSubmitted.append('InWord', formData.InWord);
       dataWillBeSubmitted.append('PaymentMethodID', formData.PaymentMethodID);
       dataWillBeSubmitted.append('PaymentMethodDetailsID', formData.PaymentMethodDetailsID);
-      dataWillBeSubmitted.append('ReceivedByUserID', userID);
+      dataWillBeSubmitted.append('ReceivedByUserID', formData.ReceivedByUserID);
       if(formData.PaymentMethodID == 2){
-         dataWillBeSubmitted.append('DepositSlip', formData.ChallanCopyPath);
+         dataWillBeSubmitted.append('DepositSlip', formData.DepositSlip);
       dataWillBeSubmitted.append('TranNumber', formData.TransactionsNumber);
       dataWillBeSubmitted.append('MobileNumber', formData.MobileNumber);
       dataWillBeSubmitted.append('BranchName', formData.BranchName);
@@ -113,7 +110,7 @@ const Page = () => {
       
       }
       
-    
+    console.log('Submitting form data:', formData);
 
       const res = await Axios.post(
         '?action=create_moneyreceipt',
@@ -238,11 +235,11 @@ const Page = () => {
                     />
 
                     <FormFileUpload
-                      label="Challan Copy Upload"
-                      id="ChallanCopyPath"
+                      label="Deposit Slip Upload"
+                      id="DepositSlip"
                       onChange={(e) => {
                         const file = e.target.files[0];
-                        setFormData(prev => ({ ...prev, ChallanCopyPath: file }));
+                        setFormData(prev => ({ ...prev, DepositSlip: file }));
                       }}
                     />
 

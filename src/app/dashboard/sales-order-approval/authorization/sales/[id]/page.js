@@ -86,9 +86,17 @@ const OrderItemsTable = ({ orderDetails, order }) => {
   );
 
   const discountPercentage = parseFloat(order?.DiscountPercentage) || 0;
-  const discountAmount = parseFloat(order?.DiscountAmount?.replace(/,/g, '')) || 0;
-  const netAmount = parseFloat(order?.NetAmount?.replace(/,/g, '')) || subtotal - discountAmount;
-
+  
+  // Use approved discount percentage if provided, otherwise use existing
+  const appDiscountPercentage = parseFloat(order?.AppDisPercent) || 0;
+  
+  // Calculate discount amount based on subtotal
+  const discountAmount = subtotal * (discountPercentage / 100);
+  const netAmount = subtotal - discountAmount;
+  
+  // Calculate approved discount amount based on net amount
+  const appDiscountAmount = netAmount * (appDiscountPercentage / 100);
+  const grandTotal = netAmount - appDiscountAmount;
   return (
     <Card>
       <SectionHeader title="Order Items" className="mb-6" />
@@ -139,14 +147,15 @@ const OrderItemsTable = ({ orderDetails, order }) => {
                 </td>
               </tr>
             )}
-            <tr className="border-t-2 border-gray-300 bg-gray-100">
-              <td colSpan="3" className="px-6 py-4 text-right font-bold text-gray-800 text-lg">
+              <tr className="border-t border-gray-200 bg-blue-50">
+              <td colSpan="3" className="px-6 py-4 text-right font-semibold text-blue-700">
                 Net Amount:
               </td>
-              <td className="px-6 py-4 text-right font-bold text-green-700 text-lg">
+              <td className="px-6 py-4 text-right font-semibold text-blue-700">
                 ৳{formatAmountWithCommas(netAmount)}
               </td>
             </tr>
+          
           </tfoot>
         </table>
       </div>
@@ -154,121 +163,111 @@ const OrderItemsTable = ({ orderDetails, order }) => {
   );
 };
 
-/* ────────────────────────────────────────
-   Approval History Card
-──────────────────────────────────────── */
-
-const ApprovalHistoryCard = ({ approvals }) => {
-  const hasApprovals =
-    approvals?.AuthComments ||
-    approvals?.AppComments ||
-    approvals?.RejectComments ||
-    approvals?.CancelledBy;
-
-  return (
-    <Card>
-      <SectionHeader title="Approval History" className="mb-6" />
-      {!hasApprovals ? (
-        <EmptyState message="No Approval History Available" />
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {approvals?.AuthComments && (
-            <ApprovalSection
-              label="Authorized"
-              comments={approvals.AuthComments}
-              by={approvals.AuthBy}
-              date={convertDateFormat(approvals.AuthDate?.split(' ')[0])}
-            />
-          )}
-          {approvals?.AppComments && (
-            <ApprovalSection
-              label="Approved"
-              comments={approvals.AppComments}
-              by={approvals.AppBy}
-              date={convertDateFormat(approvals.AppDate?.split(' ')[0])}
-            />
-          )}
-          {approvals?.RejectComments && (
-            <ApprovalSection
-              label="Rejected"
-              comments={approvals.RejectComments}
-              by={approvals.RejectBy}
-              date={convertDateFormat(approvals.RejectDate?.split(' ')[0])}
-            />
-          )}
-          {approvals?.CancelledBy && (
-            <ApprovalSection
-              label="Cancelled"
-              comments={approvals.CanclledComments}
-              by={approvals.CancelledBy}
-              date={convertDateFormat(approvals.CancelledDate?.split(' ')[0])}
-            />
-          )}
-        </div>
-      )}
-    </Card>
-  );
-};
 
 /* ────────────────────────────────────────
    Order Information Card
 ──────────────────────────────────────── */
 
 const OrderInfoCard = ({ order }) => {
-  const partyCode = order?.PartyCode || (order?.PartyName && order.PartyName.match(/\(([^)]+)\)/)?.[1]);
+  // Format retailer name with code
+  const retailerDisplay = order.RetailerName && order.RetailerCode 
+    ? `${order.RetailerName} (${order.RetailerCode})`
+    : order.RetailerName || 'N/A';
 
   return (
     <Card>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
         <SectionHeader title="Order Information" />
-        <StatusBadge status={order?.Status || "Pending Authorization"} />
+        <StatusBadge status={order.Status} />
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column - Order Details */}
         <div className="space-y-1">
           <InfoRow 
             label="Order Date" 
-            value={convertDateFormat(order?.OrderDate)} 
+            value={convertDateFormat(order.OrderDate)} 
           />
           <InfoRow 
             label="Order No" 
-            value={order?.SalesOrderNo} 
+            value={order.SalesOrderNo} 
             highlighted 
           />
           <InfoRow 
-            label="Total Amount" 
-            value={`৳${formatAmountWithCommas(parseFloat(order?.TotalAmount?.replace(/,/g, '')) || 0)}`} 
+            label="Outstanding Amount" 
+            value={order.OutstandingAmount || 'N/A'}
           />
           <InfoRow 
-            label="Outstanding" 
-            value={`৳${formatAmountWithCommas(parseFloat(order?.Outstanding?.replace(/,/g, '')) || 0)}`} 
+            label="Pending Amount" 
+            value={order.PendingAmount || 'N/A'} 
+          />
+          <InfoRow 
+            label="Remaining Amount" 
+            value={order.RemainingAmount || 'N/A'} 
+          />
+          <InfoRow 
+            label="Credit Limit" 
+            value={order.CreditLimit || 'N/A'} 
           />
         </div>
-        <div className="space-y-1">
-          <InfoRow 
-            label="Party Name" 
-            value={
-              <span className="font-semibold">
-                {order?.PartyName?.replace(/\([^)]*\)/, '')?.trim()}
-                {partyCode && <span className="text-primary1"> ({partyCode})</span>}
-              </span>
-            } 
-            highlighted 
-          />
-          <InfoRow 
-            label="Address" 
-            value={order?.Address} 
-            className="border-b-0"
-          />
-          <div className="py-2 border-b border-gray-200">
-            <span className="text-gray-600 font-medium text-sm block mb-1">Contact Number</span>
-            <span className="text-gray-800 text-sm">{order?.ContactNumber}</span>
+
+        {/* Right Column - Party & Retailer Details */}
+        <div className="space-y-4">
+          {/* Dealer Info */}
+          <div className="space-y-1 border-b pb-4">
+            <InfoRow 
+              label="Dealer Name" 
+              value={
+                <span className="font-semibold">
+                  {order.PartyName}
+                  {order.PartyCode && <span className="text-primary1"> ({order.PartyCode})</span>}
+                </span>
+              } 
+              highlighted 
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Address" 
+              value={order.Address} 
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Contact Number" 
+              value={order.ContactNumber} 
+              className="border-b-0"
+            />
+           
           </div>
+
+          {/* Distribution Points / Retailer Info */}
+         {
+          order.RetailerID&&(
+             <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Distribution Points:</h3>
+            <InfoRow 
+              label="Retailer Name" 
+              value={order.RetailerName}
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Address" 
+              value={order.RetailerAddress || order.Address} 
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Contact Number" 
+              value={order.ContactPhone1 || order.ContactNumber} 
+              className="border-b-0"
+            />
+          
+          </div>
+          )
+         }
         </div>
       </div>
     </Card>
   );
 };
-
 /* ────────────────────────────────────────
    Demand Info Card
 ──────────────────────────────────────── */
@@ -312,19 +311,19 @@ const DemandInfoCard = ({ demandInfo }) => {
 ──────────────────────────────────────── */
 
 const Page = ({ params }) => {
-  const { data: session, status } = useSession();
-  const userID = session?.user?.id;
-  console.log("User ID:", userID);
-  const id = params.id;
+   const { data: session, status } = useSession(); 
+      const userID = session?.user?.id
   const [formData, setFormData] = useState({
     SalesOrderID: "",
     AuthComments: "",
-    UserID: "",
+    AppDisPercent: '', // New field for approved discount
+    UserID: userID,
+     DiscountPercentage: '',
   });
-
   const [orderData, setOrderData] = useState(null);
   const [loading, setLoading] = useState(true);
-
+ const [updatingDiscount, setUpdatingDiscount] = useState(false);
+  const [currentAppDiscount, setCurrentAppDiscount] = useState(0);
   const router = useRouter();
   const demandInfo = useGetData(
     "?action=get_salesordersAutorizationMIS&SalesOrderID=27"
@@ -351,10 +350,47 @@ const Page = ({ params }) => {
   };
 
   useEffect(() => {
-    if (id) getData(id);
+    if (params.id) getData(params.id);
   }, [params]);
+  // Function to update approved discount via API
+  const updateApprovedDiscount = async (appDiscountPercentage) => {
+    try {
+      setUpdatingDiscount(true);
+      const payload = {
+        AppDisPercent: parseFloat(formData.AppDisPercent) || 0
+      };
 
+      const response = await Axios.put(
+        `?action=update_salesorder_discount&SalesOrderID=${formData.SalesOrderID}`, 
+        payload
+      );
+      // Update local state
+      setCurrentAppDiscount(parseFloat(formData.AppDisPercent));
+      
+      // Refresh data to get updated calculations
+      await getData(params.id);
+      
+      // Show success message
+      alert(`Approved discount updated to ${formData.AppDisPercent}% successfully!`);
+      
+      return true;
+    } catch (error) {
+      console.error('Error updating approved discount:', error);
+      alert('Failed to update approved discount. Please try again.');
+      return false;
+    } finally {
+      setUpdatingDiscount(false);
+    }
+  };
   const handleAuthorize = async () => {
+      // First update approved discount if changed
+      const discountChanged = parseFloat(formData.AppDisPercent) !== currentAppDiscount;
+      if (discountChanged) {
+        const discountUpdated = await updateApprovedDiscount(formData.AppDisPercent);
+        if (!discountUpdated) {
+          return; // Don't proceed if discount update failed
+        }
+      }
     try {
       const payload = {
         SalesOrderID: formData.SalesOrderID,
@@ -372,7 +408,57 @@ const Page = ({ params }) => {
       alert("Authorization failed. Please try again.");
     }
   };
+// Handle approved discount percentage change
+  const handleAppDiscountChange = (e) => {
+    const value = e.target.value;
+    // Allow empty string or numeric values
+    if (value === '' || /^\d*\.?\d*$/.test(value)) {
+      setFormData(prev => ({
+        ...prev,
+        AppDisPercent: value
+      }));
+    }
+  };
+  // Calculate amounts for display
+  const calculateAmounts = () => {
+    if (!orderData?.orderDetails) {
+      return {
+        subtotal: 0,
+        discountAmount: 0,
+        netAmount: 0,
+        appDiscountAmount: 0,
+        grandTotal: 0
+      };
+    }
 
+    const { order, orderDetails } = orderData;
+    
+    // Calculate subtotal from order items
+    const subtotal = orderDetails.reduce(
+      (sum, item) => sum + (parseFloat(item.Price) * parseInt(item.Quantity)),
+      0
+    );
+    
+    // Get percentages
+    const discountPercentage = parseFloat(order?.DiscountPercentage) || 0;
+    const appDiscountPercentage = parseFloat(formData.AppDisPercent) || 0;
+    
+    // Calculate amounts
+    const discountAmount = subtotal * (discountPercentage / 100);
+    const netAmount = subtotal - discountAmount;
+    const appDiscountAmount = netAmount * (appDiscountPercentage / 100);
+    const grandTotal = netAmount - appDiscountAmount;
+
+    return {
+      subtotal,
+      discountPercentage,
+      discountAmount,
+      netAmount,
+      appDiscountPercentage,
+      appDiscountAmount,
+      grandTotal
+    };
+  };
   const handleReject = async () => {
     try {
       const payload = {
@@ -403,7 +489,7 @@ const Page = ({ params }) => {
   }
 
   const { order, orderDetails, approvals } = orderData;
-
+  const amounts = calculateAmounts();
   return (
     <div className="min-h-screen bg-gray-50 py-6">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -437,7 +523,7 @@ const Page = ({ params }) => {
             />
           )}
 
-          <ApprovalHistoryCard approvals={approvals} />
+          {/* <ApprovalHistoryCard approvals={approvals} /> */}
 
           <DemandInfoCard demandInfo={demandInfo.data} />
         </div>
@@ -447,6 +533,70 @@ const Page = ({ params }) => {
           <SectionHeader title="Authorization Actions" className="mb-6" />
           
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* Left Column - Discount and Comments */}
+            <div className="lg:col-span-2 space-y-4">
+              {/* Approved Discount Percentage Input */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Approved Discount Percentage (%)
+                </label>
+                <div className="flex items-center space-x-4">
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="100"
+                    placeholder="Enter discount "
+                    value={formData.AppDisPercent}
+                    onChange={handleAppDiscountChange}
+                    className="w-full max-w-xs border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary1 focus:border-primary1"
+                  />
+                  {updatingDiscount && (
+                    <span className="text-sm text-blue-600">Updating...</span>
+                  )}
+                </div>
+              </div>
+
+              {/* Calculation Summary Box */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">Calculation Summary</h4>
+                <div className="space-y-2">
+                  <InfoRow 
+                    label="Total Amount:" 
+                    value={`৳${formatAmountWithCommas(amounts.subtotal)}`} 
+                  />
+                  {amounts.discountPercentage > 0 && (
+                    <InfoRow 
+                      label={`Discount (${amounts.discountPercentage}%):`} 
+                      value={`-৳${formatAmountWithCommas(amounts.discountAmount)}`} 
+                      className="text-red-600"
+                    />
+                  )}
+                  <InfoRow 
+                    label="Net Amount:" 
+                    value={`৳${formatAmountWithCommas(amounts.netAmount)}`} 
+                    highlighted 
+                  />
+                  {parseFloat(formData.AppDisPercent) > 0 && (
+                    <InfoRow 
+                      label={`Approved Discount (${formData.AppDisPercent}%):`} 
+                      value={`-৳${formatAmountWithCommas(amounts.appDiscountAmount)}`} 
+                      className="text-red-600"
+                    />
+                  )}
+                  <div className="pt-2 border-t border-gray-300">
+                    <InfoRow 
+                      label="Grand Total:" 
+                      value={`৳${formatAmountWithCommas(amounts.grandTotal)}`} 
+                      highlighted 
+                      className="font-bold text-lg text-green-700"
+                    />
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
             {/* Comments Input */}
             <div className="lg:col-span-2">
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -465,18 +615,19 @@ const Page = ({ params }) => {
 
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:justify-end">
+               <button
+                onClick={handleAuthorize}
+                className="px-6 py-3 bg-gradient-to-r from-primary1 to-orange-600 text-white font-medium rounded-lg hover:from-orange-600 hover:to-orange-700 transition-colors duration-200 shadow-sm"
+              >
+                Authorize Order
+              </button>
               <button
                 onClick={handleReject}
                 className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-colors duration-200 shadow-sm"
               >
                 Cancel Order
               </button>
-              <button
-                onClick={handleAuthorize}
-                className="px-6 py-3 bg-gradient-to-r from-primary1 to-orange-600 text-white font-medium rounded-lg hover:from-orange-600 hover:to-orange-700 transition-colors duration-200 shadow-sm"
-              >
-                Authorize Order
-              </button>
+             
             </div>
           </div>
         </Card>

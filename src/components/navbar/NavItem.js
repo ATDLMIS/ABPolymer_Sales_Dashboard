@@ -172,6 +172,13 @@ const NavItem = ({ session }) => {
       type: 'main'
     },
     {
+      name: 'ChallanApproval',
+      displayName: 'Challan Approval',
+      icon: CheckSquare,
+      href: '/dashboard/delivery-challan-approval',
+      type: 'main'
+    },
+    {
       name: 'Invoice/Bill',
       displayName: 'Invoice/Bill',
       icon: Receipt,

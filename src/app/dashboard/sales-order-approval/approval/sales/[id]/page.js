@@ -1,6 +1,6 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import { useState, useEffect, use } from 'react';
+import { useState, useEffect } from 'react';
 import convertDateFormat from '@/utils/convertDateFormat';
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 import useGetData from '@/utils/useGetData';
@@ -257,63 +257,100 @@ const ApprovalHistoryCard = ({ approvals }) => {
 ──────────────────────────────────────── */
 
 const OrderInfoCard = ({ order }) => {
-  const partyCode = order?.PartyCode || (order?.PartyName && order.PartyName.match(/\(([^)]+)\)/)?.[1]);
+  // Format retailer name with code
+  const retailerDisplay = order.RetailerName && order.RetailerCode 
+    ? `${order.RetailerName} (${order.RetailerCode})`
+    : order.RetailerName || 'N/A';
 
   return (
     <Card>
       <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
         <SectionHeader title="Order Information" />
-        <StatusBadge status={order?.Status || "Pending Approval"} />
+        <StatusBadge status={order.Status} />
       </div>
+
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        {/* Left Column - Order Details */}
         <div className="space-y-1">
           <InfoRow 
             label="Order Date" 
-            value={convertDateFormat(order?.OrderDate)} 
+            value={convertDateFormat(order.OrderDate)} 
           />
           <InfoRow 
             label="Order No" 
-            value={order?.SalesOrderNo} 
+            value={order.SalesOrderNo} 
             highlighted 
           />
           <InfoRow 
-            label="Total Amount" 
-            value={`৳${formatAmountWithCommas(parseFloat(order?.TotalAmount?.replace(/,/g, '')) || 0)}`} 
+            label="Outstanding Amount" 
+            value={order.OutstandingAmount || 'N/A'}
           />
           <InfoRow 
-            label="Initial Discount" 
-            value={`${parseFloat(order?.DiscountPercentage) || 0}%`} 
+            label="Pending Amount" 
+            value={order.PendingAmount || 'N/A'} 
           />
           <InfoRow 
-            label="Approved Discount" 
-            value={`${parseFloat(order?.AppDisPercent) || 0}%`} 
+            label="Remaining Amount" 
+            value={order.RemainingAmount || 'N/A'} 
+          />
+          <InfoRow 
+            label="Credit Limit" 
+            value={order.CreditLimit || 'N/A'} 
           />
         </div>
-        <div className="space-y-1">
-          <InfoRow 
-            label="Party Name" 
-            value={
-              <span className="font-semibold">
-                {order?.PartyName?.replace(/\([^)]*\)/, '')?.trim()}
-                {partyCode && <span className="text-primary1"> ({partyCode})</span>}
-              </span>
-            } 
-            highlighted 
-          />
-          <InfoRow 
-            label="Net Amount" 
-            value={`৳${formatAmountWithCommas(parseFloat(order?.NetAmount?.replace(/,/g, '')) || 0)}`} 
-            highlighted 
-          />
-          <InfoRow 
-            label="Grand Total" 
-            value={`৳${formatAmountWithCommas(parseFloat(order?.GrandTotal?.replace(/,/g, '')) || 0)}`} 
-            highlighted 
-          />
-          <div className="py-2 border-b border-gray-200">
-            <span className="text-gray-600 font-medium text-sm block mb-1">Contact Number</span>
-            <span className="text-gray-800 text-sm">{order?.ContactNumber}</span>
+
+        {/* Right Column - Party & Retailer Details */}
+        <div className="space-y-4">
+          {/* Dealer Info */}
+          <div className="space-y-1 border-b pb-4">
+            <InfoRow 
+              label="Dealer Name" 
+              value={
+                <span className="font-semibold">
+                  {order.PartyName}
+                  {order.PartyCode && <span className="text-primary1"> ({order.PartyCode})</span>}
+                </span>
+              } 
+              highlighted 
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Address" 
+              value={order.Address} 
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Contact Number" 
+              value={order.ContactNumber} 
+              className="border-b-0"
+            />
+           
           </div>
+
+          {/* Distribution Points / Retailer Info */}
+         {
+          order.RetailerID&&(
+             <div className="space-y-1">
+            <h3 className="text-sm font-semibold text-gray-700 mb-2">Distribution Points:</h3>
+            <InfoRow 
+              label="Retailer Name" 
+              value={order.RetailerName}
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Address" 
+              value={order.RetailerAddress || order.Address} 
+              className="border-b-0"
+            />
+            <InfoRow 
+              label="Contact Number" 
+              value={order.ContactPhone1 || order.ContactNumber} 
+              className="border-b-0"
+            />
+          
+          </div>
+          )
+         }
         </div>
       </div>
     </Card>
@@ -363,13 +400,12 @@ const InfoSectionCard = ({ title, data }) => {
 ──────────────────────────────────────── */
 
 const Page = ({ params }) => {
-   const { data: session, status } = useSession(); 
+  const { data: session, status } = useSession(); 
     const userID = session?.user?.id
-    const id = params.id;
   const [formData, setFormData] = useState({
     SalesOrderID: '',
     AppComments: '',
-    UserID: '',
+    UserID: userID,
     DiscountPercentage: '',
     AppDisPercent: '' // New field for approved discount
   });
@@ -395,7 +431,7 @@ const Page = ({ params }) => {
         setFormData(prev => ({
           ...prev,
           SalesOrderID: res.data.order.SalesOrderID,
-          UserID: res.data.order.UserID,
+          UserID: session.user.id,
           DiscountPercentage: discount.toString(),
           AppDisPercent: appDiscount.toString() // Set approved discount
         }));
@@ -409,8 +445,8 @@ const Page = ({ params }) => {
   };
 
   useEffect(() => {
-    if (id) getData(id);
-  }, [id]);
+    if (params.id) getData(params.id);
+  }, [params.id]);
 
   // Function to update approved discount via API
   const updateApprovedDiscount = async (appDiscountPercentage) => {
@@ -428,7 +464,7 @@ const Page = ({ params }) => {
       setCurrentAppDiscount(parseFloat(formData.AppDisPercent));
       
       // Refresh data to get updated calculations
-      await getData(id);
+      await getData(params.id);
       
       // Show success message
       alert(`Approved discount updated to ${formData.AppDisPercent}% successfully!`);
@@ -445,15 +481,7 @@ const Page = ({ params }) => {
 
   const handleAuthorize = async () => {
     try {
-      // First update approved discount if changed
-      const discountChanged = parseFloat(formData.AppDisPercent) !== currentAppDiscount;
-      if (discountChanged) {
-        const discountUpdated = await updateApprovedDiscount(formData.AppDisPercent);
-        if (!discountUpdated) {
-          return; // Don't proceed if discount update failed
-        }
-      }
-
+    
       // Then proceed with approval
       const payload = {
         SalesOrderID: formData.SalesOrderID,
@@ -461,7 +489,7 @@ const Page = ({ params }) => {
         ReturnInfo: 'Approved for 90 units due to stock limitations',
         AuthComments: null,
         AppComments: formData.AppComments,
-        UserID: userID,
+        UserID: formData.UserID,
       };
 
       await Axios.post('?action=create_sndApprovalDetails', payload);
@@ -613,7 +641,7 @@ const Page = ({ params }) => {
             {/* Left Column - Discount and Comments */}
             <div className="lg:col-span-2 space-y-4">
               {/* Approved Discount Percentage Input */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Approved Discount Percentage (%)
                 </label>
@@ -635,10 +663,10 @@ const Page = ({ params }) => {
                 <p className="text-sm text-gray-500 mt-1">
                   Current approved discount: {currentAppDiscount}%
                 </p>
-              </div>
+              </div> */}
 
               {/* Calculation Summary Box */}
-              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+              {/* <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <h4 className="text-sm font-semibold text-gray-700 mb-3">Calculation Summary</h4>
                 <div className="space-y-2">
                   <InfoRow 
@@ -673,7 +701,7 @@ const Page = ({ params }) => {
                     />
                   </div>
                 </div>
-              </div>
+              </div> */}
 
               {/* Comments Input */}
               <div>
@@ -692,13 +720,7 @@ const Page = ({ params }) => {
 
             {/* Right Column - Action Buttons */}
             <div className="flex flex-col sm:flex-row lg:flex-col gap-3 lg:justify-end">
-              <button
-                onClick={handleReject}
-                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-colors duration-200 shadow-sm"
-              >
-                Reject Order
-              </button>
-              <button
+                 <button
                 onClick={handleAuthorize}
                 disabled={updatingDiscount}
                 className={`px-6 py-3 bg-gradient-to-r from-primary1 to-orange-600 text-white font-medium rounded-lg hover:from-orange-600 hover:to-orange-700 transition-colors duration-200 shadow-sm ${
@@ -707,6 +729,13 @@ const Page = ({ params }) => {
               >
                 {updatingDiscount ? 'Updating...' : 'Approve Order'}
               </button>
+              <button
+                onClick={handleReject}
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-red-600 text-white font-medium rounded-lg hover:from-red-600 hover:to-red-700 transition-colors duration-200 shadow-sm"
+              >
+                Reject Order
+              </button>
+           
               
              
              

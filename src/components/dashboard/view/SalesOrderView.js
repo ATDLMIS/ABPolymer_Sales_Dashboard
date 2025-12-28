@@ -83,6 +83,7 @@ const OrderItemsTable = ({ orderDetails, order }) => {
   const discountAmount = parseInt(order.DiscountAmount) || 0;
   const netAmount =  parseFloat(order.NetAmount.replace(/,/g, ''))
   const approvedDiscountPercentage = parseInt(order.AppDisPercent) || 0;
+     console.log('Approved Discount Percentage:', approvedDiscountPercentage);  
   const grandTotal =  parseFloat(order.GrandTotal.replace(/,/g, ''))
   // Calculate approved discount amount
  const approvedDiscountAmount = netAmount - grandTotal;

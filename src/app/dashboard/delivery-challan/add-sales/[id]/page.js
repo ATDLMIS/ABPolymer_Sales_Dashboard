@@ -36,7 +36,7 @@ const Page = ({ params }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const [salesOrderNos, setSalesOrderNos] = useState([]);
-  
+  const [challanQty, setChallanQty] = useState('');
   // New state for trips
   const [allTrips, setAllTrips] = useState([]);
   const [selectedTripID, setSelectedTripID] = useState('');
@@ -207,7 +207,6 @@ const Page = ({ params }) => {
             SalesOrderNo: item.SalesOrderNo,
             SalesOrderID: item.SalesOrderID,
             OrderQty: item.Quantity,
-            ChallanQty: '',
             AvailQty: item.AvailableQty,
           })),
         }));
@@ -250,6 +249,7 @@ const Page = ({ params }) => {
         ChallanDate: formData.ChallanDate,
         SalesOrderNo: salesOrderNos.join(', '),
         PartyID: Number(formData.PartyID),
+        TripID: selectedTripID ? Number(selectedTripID) : null,
         OrderTypeID: Number(formData.OrderTypeID),
         OutletID: Number(formData.OutletID),
         UserID: Number(formData.UserID),
@@ -264,7 +264,7 @@ const Page = ({ params }) => {
           ProductCategoryID: Number(d.ProductCategoryID),
           ProductID: Number(d.ProductID),
           OrderQty: Number(d.OrderQty),
-          ChallanQty: Number(d.ChallanQty),
+          ChallanQty: Number(challanQty),
           AvailQty: Number(d.AvailQty)
         }))
       };
@@ -279,7 +279,7 @@ const Page = ({ params }) => {
           maxBodyLength: Infinity
         }
       );
-
+console.log(response.data);
       if (!response.data?.success) {
         throw new Error(response.data?.error || 'API failed');
       }
@@ -386,7 +386,7 @@ const Page = ({ params }) => {
         <h1 className="text-2xl font-bold text-gray-800">Add Delivery Challan</h1>
       </div>
 
-      <div className="flex justify-end mb-6">
+      {/* <div className="flex justify-end mb-6">
         <div className="relative w-full max-w-md">
           <input
             name="search"
@@ -396,7 +396,7 @@ const Page = ({ params }) => {
           />
           <FiSearch className="absolute left-3 top-3 text-gray-400" />
         </div>
-      </div>
+      </div> */}
 
       <div className="bg-white rounded-lg shadow-md p-6">
         <form onSubmit={handleSubmit}>
@@ -435,44 +435,45 @@ const Page = ({ params }) => {
                 </h3>
 
                 <div className="space-y-2 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-500">Party Name</span>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-gray-500">Party Name</span>
                     <div className="font-medium text-gray-800">
                       {formData.PartyName || 'N/A'}
                     </div>
                   </div>
 
-                  <div>
-                    <span className="font-medium text-gray-500">Contacts</span>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-gray-500">Contacts</span>
                     <div>
                       {formData.ContactName || 'N/A'}
                       {formData.ContactNumber && `, Phone: ${formData.ContactNumber}`}
                     </div>
                   </div>
 
-                  <div>
-                    <span className="font-medium text-gray-500">Address</span>
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-gray-500">Address</span>
                     <div>{formData.PresentAddress || 'N/A'}</div>
                   </div>
                 </div>
               </div>
 
+               {formData.RetailerCode && (
               <div className="bg-green-50 p-4 rounded-lg border border-green-200">
                 <h3 className="text-lg font-semibold text-gray-800 mb-3">
                   Retailer Information
                 </h3>
 
-                {formData.RetailerCode || formData.RetailerName ? (
+               
                   <div className="space-y-2 text-sm">
-                    <div>
-                      <span className="font-medium text-gray-500">Retailer Name</span>
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-gray-500">Retailer Name</span>
                       <div className="font-medium text-gray-800">
                         {formData.RetailerCode} - {formData.RetailerName}
                       </div>
                     </div>
 
-                    <div>
-                      <span className="font-medium text-gray-500">Contacts</span>
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-gray-500">Contacts</span>
                       <div>
                         {formData.RetailerContactPerson || 'N/A'}
                         {formData.RetailerContactPhone &&
@@ -480,17 +481,14 @@ const Page = ({ params }) => {
                       </div>
                     </div>
 
-                    <div>
-                      <span className="font-medium text-gray-500">Address</span>
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-gray-500">Address</span>
                       <div>{formData.RetailerAddress || 'N/A'}</div>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-sm text-gray-500 italic">
-                    No retailer information available
-                  </div>
-                )}
+                
               </div>
+            )}
             </div>
           </div>
 
@@ -512,7 +510,7 @@ const Page = ({ params }) => {
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
                           ORDERED
                         </th>
-                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider mr-10">
                           CHALLAN QTY
                         </th>
                         <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -538,14 +536,12 @@ const Page = ({ params }) => {
                             <td className="px-4 py-3 whitespace-nowrap text-sm text-gray-700 text-right font-medium">
                               {item.OrderQty} Pcs
                             </td>
-                            <td className="px-4 py-3 whitespace-nowrap">
+                            <td className="px-4 py-3 whitespace-nowrap  text-sm text-gray-700">
                               <input
                                 type="number"
-                                min="0"
-                                max={Math.min(item.AvailQty, item.OrderQty)}
                                 className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent text-right"
-                                value={item.ChallanQty}
-                                onChange={e => handleChallanQtyChange(e, item)}
+                                value={challanQty}
+                                onChange={(e)=>setChallanQty(e.target.value)}
                                 required
                               />
                             </td>
@@ -573,9 +569,9 @@ const Page = ({ params }) => {
             <h2 className="text-xl font-semibold mb-4">Transport Information</h2>
             
             {/* Trip Selection Dropdown */}
-            <div className="mb-4 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+            <div className="w-[40%] mb-4 ">
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                Select Trip (Optional - Auto-fills transport details)
+                Select Trip (Auto-fills transport details)
               </label>
               <select
                 value={selectedTripID}
@@ -598,16 +594,16 @@ const Page = ({ params }) => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Hire Agent Name
+                  Transport Name
                 </label>
                 <input
                   type="text"
                   name="HireAgentName"
                   value={formData.HireAgentName}
-                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent"
-                  placeholder="Enter hire agent name"
+                  placeholder="Enter transport name"
                   required
+                  readOnly
                 />
               </div>
               <div>
@@ -618,10 +614,9 @@ const Page = ({ params }) => {
                   type="text"
                   name="DriverName"
                   value={formData.DriverName}
-                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent"
                   placeholder="Enter driver name"
-                  required
+                   readOnly
                 />
               </div>
               <div>
@@ -645,10 +640,9 @@ const Page = ({ params }) => {
                   type="text"
                   name="Driver_Number"
                   value={formData.Driver_Number}
-                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent"
                   placeholder="Enter driver number"
-                  required
+                  readOnly
                 />
               </div>
               <div>
@@ -659,9 +653,9 @@ const Page = ({ params }) => {
                   type="text"
                   name="Vehicle_Number"
                   value={formData.Vehicle_Number}
-                  onChange={handleInputChange}
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent"
                   placeholder="Enter vehicle number"
+                  readOnly
                 />
               </div>
             </div>

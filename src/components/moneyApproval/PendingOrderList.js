@@ -10,7 +10,7 @@ process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const PendingOrderList = () => {
     const { data: session } = useSession();
-    const userID = session?.user?.id || 501; // Fallback to 501 if session is not available
+    const userID = session?.user?.id; // Fallback to 501 if session is not available
 
     const { status, data} = useGetData(`?action=get_MoneyReceiptApproval&UserID=${userID}`);
 

@@ -12,6 +12,7 @@ const page = ({params}) => {
     status: 'pending',
     data: null
   })
+  console.log(state.data)
 
   const getData = async id => {
     try {
@@ -58,12 +59,6 @@ const page = ({params}) => {
     <div className="container mx-auto px-4 py-6">
       <div className="flex justify-between items-center mb-6 flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-gray-800">Delivery Challan Details</h1>
-        <Link
-          href={`/dashboard/delivery-challan/preview/sales/${params.id}`}
-          className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors duration-200"
-        >
-          Preview
-        </Link>
       </div>
 
       {state.data && (

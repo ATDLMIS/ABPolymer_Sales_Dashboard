@@ -46,6 +46,7 @@ const SalesOrderForm = ({ session }) => {
         id: uuidv4(),
         ProductCategoryID: '',
         ProductID: '',
+        RetailerID: '', // Will be set when user selects retailer
         Quantity: '',
         Price: '',
         TotalPrice: 0,
@@ -108,14 +109,13 @@ const SalesOrderForm = ({ session }) => {
       ...prevState,
       TotalAmount: total,
       DiscountPercentage: discountResult.discountPercentage,
-      AppDisPercent: discountResult.discountPercentage,
       DiscountAmount: discountResult.discountAmount,
       FinalAmount: discountResult.finalAmount,
     }));
   }, [formData.orderDetails]);
 
   const allParties = useGetData(
-    `?action=get_parties_users&UserID=${session.user.id}`
+    `?action=get_parties_users_web&UserID=${session.user.id}`
   );
 
   const getOrderId = async () => {
@@ -294,7 +294,6 @@ const SalesOrderForm = ({ session }) => {
       TotalAmount: Number(formData.TotalAmount),
       DiscountAmount: Number(formData.DiscountAmount),
       DiscountPercentage: Number(formData.DiscountPercentage),
-      AppDisPercent: Number(formData.AppDisPercent),
       UserID: Number(formData.UserID),
       SpecimenUserID: null,
       orderDetails: formData.orderDetails.map(detail => ({
@@ -386,19 +385,31 @@ const SalesOrderForm = ({ session }) => {
                   <div className="grid grid-cols-1 gap-2 text-xs">
                     <div>
                       <span className="font-medium text-gray-700">Contact Person: </span>
-                      <span className="text-gray-600">{partyDetails.ContactPersonName || 'N/A'}</span>
+                      <span className="text-gray-600">{partyDetails.ContactName || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Contact Number: </span>
+                      <span className="text-gray-600">{partyDetails.ContactNumber || 'N/A'}</span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Address: </span>
-                      <span className="text-gray-600">{partyDetails.Address || 'N/A'}</span>
+                      <span className="text-gray-600">{partyDetails.PresentAddress || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Customer Outstanding Balance: </span>
+                      <span className="text-gray-600">{partyDetails.OutstandingAmount || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Pending Amount: </span>
+                      <span className="text-gray-600">{partyDetails.PendingAmount || 'N/A'}</span>
+                    </div>
+                    <div>
+                      <span className="font-medium text-gray-700">Remaining Amount: </span>
+                      <span className="text-gray-600">{partyDetails.RemainingAmount || 'N/A'}</span>
                     </div>
                     <div>
                       <span className="font-medium text-gray-700">Credit Limit: </span>
                       <span className="text-gray-600">{partyDetails.CreditLimit || 'N/A'}</span>
-                    </div>
-                    <div>
-                      <span className="font-medium text-gray-700">Outstanding: </span>
-                      <span className="text-gray-600">{partyDetails.Outstanding || 'N/A'}</span>
                     </div>
                   </div>
                 </div>
@@ -609,7 +620,7 @@ const SalesOrderForm = ({ session }) => {
                         
                         <div className="flex justify-between items-center pt-2 border-t border-gray-300">
                           <span className="font-semibold text-gray-800">Final Amount:</span>
-                          <span className=" font-semibold text-green-700">
+                          <span className="font-semibold text-green-700">
                             {formatAmountWithCommas(formData.FinalAmount) || '0.00'}
                           </span>
                         </div>

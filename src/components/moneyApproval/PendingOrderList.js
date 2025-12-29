@@ -58,34 +58,14 @@ const PendingOrderList = () => {
       cellClassName: 'text-center',
       render: (row) => (
         <div className="flex justify-center items-center gap-3">
-            {
-            row.AppStatus === 1 ? ( <Link
-            href={`/dashboard/money-receipt-approval/check/${row.MRID}`}
-            className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
-            title="View Details"
-          >
-            <FaRegClock  className="text-lg" />
-          </Link>):
-          row.AppStatus === 2 ? (
+          
             <Link
-            href={`/dashboard/money-receipt-approval/authorized/${item.MRID}`}
-            className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
-            title="View Details"
-          >
-            <FaLock className="text-lg" />
-            </Link>
-          ):(
-            <Link
-            href={`/dashboard/money-receipt-approval/approval/${item.MRID}`}
-            className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
+            href={`/dashboard/money-receipt-approval/approval/${row.MRID}`}
+            className="inline-flex items-center gap-2 bg-green-500 text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
             title="View Details"
           >
             <FaCheckCircle className="text-lg" />
             </Link>
-          )
-        }
-         
-          
           
         </div>
       )

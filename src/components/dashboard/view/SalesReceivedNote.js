@@ -123,22 +123,34 @@ const SalesReceivedNote = ({ id }) => {
         className="p-8 bg-white text-black w-full max-w-6xl mx-auto border border-gray-300"
       >
         <div>
-          {/* Header */}
-          <div className="text-center mb-6">
-            <div className="flex items-center justify-center mb-2">
-              <img 
-                src="/images/logo.png" 
-                alt="Asian AB Polymer" 
-                className="w-[120px] h-16 mr-10" 
-              />
-              <div className="text-center">
-                <h1 className="text-xl font-bold">Asian AB Polymer Industries Ltd.</h1>
-                <p className="text-sm">House # 41 (level-3), Road #7 Block # F, Banani, Dhaka-1213</p>
-              </div>
+            {/* Header Section */}
+            <div className=" mb-4 flex justify-between items-center pb-2 mt-3">
+                <div >
+                  <img 
+                    src="/images/logo.png" 
+                    alt="Asian AB Polymer" 
+                    className="w-auto h-16 mb-2"
+                  />
+                </div>
+                <div className="text-center">
+                  <h1 className="text-xl mb-2">ASIAN AB POLYMER INDUSTRIES LTD.</h1>
+                  <p className="text-xs">(A Zone for Best Quality Products)</p>
+                  <p className="text-xs mt-2">House # 41 (level-3), Road #7 Block # F, Banani, Dhaka-1213</p>
+                  <p className="text-xs">Tel +9714221385 What's app 0553353185</p>
+                  <p className="text-xs">E-mail: saurav@asianabpolymer.com.bd</p>
+                </div>
+                <div className=" ">
+                  <div className="border border-black px-4 py-2 inline-block">
+                    <p className="font-semibold">Duplicate Copy</p>
+                  </div>
+                </div>
+             
+              
+              
             </div>
-            <h2 className="text-lg font-bold mt-4 text-center">Sales Order</h2>
-          </div>
-
+               <div className="text-center  py-2 mb-4">
+                <h2 className="text-lg font-bold">SALES ORDER</h2>
+              </div>
           {/* Customer and Order Info - Two Column Layout */}
           <div className="flex justify-between items-center mb-6 text-sm">
             {/* Left Column - Order Details */}

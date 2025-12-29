@@ -59,7 +59,7 @@ const CompleteOrderList = () => {
       render: (row) => (
         <div className="flex justify-center items-center gap-3">
             <Link
-            href={`/dashboard/money-receipt-approval/view/${item.MRID}`}
+            href={`/dashboard/money-receipt-approval/view/${row.MRID}`}
             className="inline-flex items-center gap-2 bg-bgIcon text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
             title="View Details"
           >

@@ -145,84 +145,7 @@ const page = ({ params }) => {
           </div>
         </div>
 
-        {/* Approval/Cancellation Card */}
-        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
-          <div className="bg-gray-100 px-8 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800">
-              {state.data.Approvals?.CanclledComments ? 'Cancellation Details' : 'Approval Timeline'}
-            </h2>
-          </div>
-
-          <div className="px-8 py-6">
-            {state.data.Approvals?.CanclledComments ? (
-              <div className="border-l-4 border-red-500 pl-4 py-3 bg-red-50 rounded-r-lg">
-                <h3 className="text-sm font-semibold text-red-700 uppercase tracking-wide mb-3">
-                  Cancelled
-                </h3>
-                <div className="space-y-1.5">
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-600 w-32">Cancelled By:</span>
-                    <span className="text-sm font-medium text-gray-900">{state.data.Approvals.CancelledBy}</span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-600 w-32">Date:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {convertDateFormat(state.data.Approvals.CancelledDate)}
-                    </span>
-                  </div>
-                  <div className="flex items-center">
-                    <span className="text-sm text-gray-600 w-32">Status:</span>
-                    <span className="text-sm font-medium text-gray-900">
-                      {state.data.Approvals.CanclledComments || 'N/A'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <>
-                {state.data.Approvals.CheckedComments &&
-                  renderApprovalSection(
-                    'Checked',
-                    state.data.Approvals.CheckedComments,
-                    state.data.Approvals.CheckedBy,
-                    state.data.Approvals.CheckedDate
-                  )}
-                {state.data.Approvals.AuthComments &&
-                  renderApprovalSection(
-                    'Authorized',
-                    state.data.Approvals.AuthComments,
-                    state.data.Approvals.AuthBy,
-                    state.data.Approvals.AuthDate
-                  )}
-                {state.data.Approvals.RejectComments &&
-                  renderApprovalSection(
-                    'Rejected',
-                    state.data.Approvals.RejectComments,
-                    state.data.Approvals.RejectBy,
-                    state.data.Approvals.RejectDate
-                  )}
-                {state.data.Approvals.AppComments &&
-                  renderApprovalSection(
-                    'Approved',
-                    state.data.Approvals.AppComments,
-                    state.data.Approvals.AppBy,
-                    state.data.Approvals.AppDate
-                  )}
-                {!state.data.Approvals.CheckedComments &&
-                  !state.data.Approvals.AuthComments &&
-                  !state.data.Approvals.AppComments && (
-                    <div className="text-center py-8 text-gray-500">
-                      <svg className="w-16 h-16 mx-auto mb-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                      </svg>
-                      <p className="font-medium">No Approval Details Available</p>
-                      <p className="text-sm mt-1">This receipt is pending approval</p>
-                    </div>
-                  )}
-              </>
-            )}
-          </div>
-        </div>
+       
   {/* Deposit Slip Modal */}
       {showDepositSlip && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4" onClick={() => setShowDepositSlip(false)}>
@@ -252,7 +175,7 @@ const page = ({ params }) => {
         </div>
       )}
         {/* Action Buttons */}
-        <div className="mt-6 flex justify-center gap-4">
+        {/* <div className="mt-6 flex justify-center gap-4">
           <button 
             onClick={() => setShowPreview(true)} 
             className="bg-primary1 text-white font-medium px-8 py-3 rounded-lg shadow-md transition-colors duration-200 flex items-center gap-2"
@@ -263,7 +186,7 @@ const page = ({ params }) => {
             </svg>
             Preview Receipt
           </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Print Preview Modal */}

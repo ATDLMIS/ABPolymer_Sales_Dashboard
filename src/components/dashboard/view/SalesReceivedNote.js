@@ -333,8 +333,8 @@ const SalesReceivedNote = ({ id }) => {
           </div>
         </div>
       </div>
-      
-      <div className="flex justify-end items-center mt-2 mr-8">
+
+      <div className="flex justify-end items-center mt-2 mr-3">
         <button 
           onClick={handlePrint} 
           className="bg-primary1 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"

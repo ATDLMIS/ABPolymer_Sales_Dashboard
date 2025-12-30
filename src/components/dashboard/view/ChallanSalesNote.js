@@ -54,12 +54,6 @@ const ChallanSalesNote = ({id}) => {
 
       return (
         <div>
-          <button
-            onClick={handlePrint}
-            className="mb-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600 no-print"
-          >
-            Print
-          </button>
           <div
             id="print-area"
             className="p-8 bg-white text-black w-full max-w-5xl mx-auto border border-gray-300"
@@ -129,17 +123,12 @@ const ChallanSalesNote = ({id}) => {
 
               <div className="space-y-1">
                 <div className="flex">
-                  <span className="font-semibold w-32">Order No</span>
-                  <span className="mr-2">:</span>
-                  <span>{receiptData.data.ChallanMaster.SalesOrderNo}</span>
-                </div>
-                <div className="flex">
-                  <span className="font-semibold w-32">Delivery No</span>
+                  <span className="font-semibold w-32">Challan No</span>
                   <span className="mr-2">:</span>
                   <span>{receiptData.data.ChallanMaster.ChallanNo}</span>
                 </div>
                 <div className="flex">
-                  <span className="font-semibold w-32">Delivery Date</span>
+                  <span className="font-semibold w-32">Challan Date</span>
                   <span className="mr-2">:</span>
                   <span>{receiptData.data.ChallanMaster.ChallanDate}</span>
                 </div>
@@ -185,8 +174,8 @@ const ChallanSalesNote = ({id}) => {
               <thead>
                  <tr className="bg-gray-100">
                   <th className="border border-black p-2 w-[5%]">S.L</th>
-                  <th className="border border-black p-2 w-[10%]">Item Code</th>
                    <th className="border border-black p-2 w-[10%]">Sales Order No</th>
+                  <th className="border border-black p-2 w-[10%]">Item Code</th>
                   <th className="border border-black p-2 text-center w-[40%]">Item Name & Description</th>
                   <th className="border border-black p-2 w-[5%] text-center">Unit</th>
                   <th className="border border-black p-2 w-[7%] text-center">Qty</th>
@@ -196,8 +185,8 @@ const ChallanSalesNote = ({id}) => {
                 {receiptData.data.ChallanDetails.length > 0 && receiptData.data.ChallanDetails.map((item, index) => (
                   <tr key={index}>
                     <td className="border border-black p-2 text-center">{index + 1}</td>
-                    <td className="border border-black p-2 text-center">{item.ItemCode || 'N/A'}</td>
-                    <td className="border border-black p-2 text-center">{item.SalesOrderNo || 'N/A'}</td>
+                       <td className="border border-black p-2 text-center">{item.SalesOrderNo || 'N/A'}</td>
+                    <td className="border border-black p-2 text-center">{item.ProductName?.split('-')?.[0]?.trim() || 'N/A'}</td>
                     <td className="border border-black p-2">{item.ProductName}</td>
                     <td className="border border-black p-2 text-center">{item.Unit || 'PCS'}</td>
                     <td className="border border-black p-2 text-right">{formatAmountWithCommas(Number(item.ChallanQty))}</td>
@@ -234,14 +223,11 @@ const ChallanSalesNote = ({id}) => {
               </div>
             </div>
 
-            {/* Print Source Info */}
-            <div className="text-xs text-center mt-8 text-gray-500">
-              <p>Print Source: {receiptData.data.ChallanMaster.PrintSource || 'System Generated'}</p>
-            </div>
+            
             {
-              receiptData.data.ChallanMaster.RetailerCode==null && (
+             receiptData.data.PendingSalesOrderDetails.length > 0 && (
                 <>
-                  <div className="text-start mb-4">
+                  <div className="text-start mb-4 mt-8">
                 <h2 className="text-lg font-bold">Pending Delivery</h2>
               </div>
             {/* Product Table */}
@@ -249,8 +235,8 @@ const ChallanSalesNote = ({id}) => {
               <thead>
                 <tr className="bg-gray-100">
                   <th className="border border-black p-2 w-[5%]">S.L</th>
+                  <th className="border border-black p-2 w-[10%]">Sales Order No</th>
                   <th className="border border-black p-2 w-[10%]">Item Code</th>
-                   <th className="border border-black p-2 w-[10%]">Sales Order No</th>
                   <th className="border border-black p-2 text-center w-[40%]">Item Name & Description</th>
                   <th className="border border-black p-2 w-[5%] text-center">Unit</th>
                   <th className="border border-black p-2 w-[7%] text-center">Qty</th>
@@ -261,8 +247,8 @@ const ChallanSalesNote = ({id}) => {
                  
                   <tr key={index}>
                     <td className="border border-black p-2 text-center">{index + 1}</td>
-                    <td className="border border-black p-2 text-center">{item.ItemCode || 'N/A'}</td>
-                       <td className="border border-black p-2 text-center">{item.SalesOrderNo || 'N/A'}</td>
+                      <td className="border border-black p-2 text-center">{item.SalesOrderNo || 'N/A'}</td>
+                    <td className="border border-black p-2 text-center">{item.ProductName?.split('-')?.[0]?.trim() || 'N/A'}</td>
                     <td className="border border-black p-2">{item.ProductName}</td>
                     <td className="border border-black p-2 text-center">{item.Unit || 'PCS'}</td>
                     <td className="border border-black p-2 text-right">{formatAmountWithCommas(Number(item.Quantity))}</td>
@@ -284,6 +270,18 @@ const ChallanSalesNote = ({id}) => {
               )
             }
           </div>
+          
+           <div className="flex justify-end items-center mt-2 mr-3">
+        <button 
+          onClick={handlePrint} 
+          className="bg-primary1 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+          </svg>
+          Print
+        </button>
+      </div>
         </div>
       );
 }

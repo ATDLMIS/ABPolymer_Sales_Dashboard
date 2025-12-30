@@ -5,12 +5,15 @@ import { FaCheckCircle ,FaEye,FaLock} from 'react-icons/fa';
 import useGetData from '@/utils/useGetData';
 import DataTable from '../table/DataTable';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const ChallanPendingList = () => {
   const router = useRouter();
+    const {data:season}=useSession();
+   const userID=season?.user.id;
   const salesorderList = useGetData(
-    '?action=get_salesordersChallan'
+    `?action=get_ChallanApproval&UserID=${userID}`
   );
 
  const formatDate = (dateString) => {
@@ -27,23 +30,23 @@ const ChallanPendingList = () => {
       cellClassName: 'font-medium text-center text-xs'
     },
     {
-      key: 'SalesOrderNo',
-      header: 'Order No',
+      key: 'ChallanNo',
+      header: 'Challan No',
       width: '12%',
       cellClassName: 'text-xs font-medium'
     },
     {
-      key: 'OrderDate',
+      key: 'ChallanDate',
       header: 'Date',
       width: '8%',
       render: (row) => (
         <div className="text-xs whitespace-nowrap">
-          {formatDate(row.OrderDate)}
+          {formatDate(row.ChallanDate)}
         </div>
       )
     },
     {
-      key: 'PartlyDetails',
+      key: 'PartyName',
       header: 'Party Name',
       width: '15%',
       headerClassName: 'text-center',
@@ -52,7 +55,7 @@ const ChallanPendingList = () => {
     {
       key: 'RetailerDetailsProfile',
       header: 'Retailer',
-      width: '20%',
+      width: '15%',
       headerClassName: 'text-center',
       cellClassName: 'text-left',
       render: (row) => (
@@ -74,7 +77,7 @@ const ChallanPendingList = () => {
       )
     },
      {
-      key: 'ChallanStatusName',
+      key: 'AppStatusText',
       header: 'Challan Status',
       width: '12%',
       cellClassName: 'text-xs font-medium'
@@ -88,7 +91,7 @@ const ChallanPendingList = () => {
       render: (row) => (
         <div className="flex justify-center items-center gap-3">
            <Link
-           href={`/dashboard/delivery-challan/view/sales/${row.ChallanID}`}
+           href={`/dashboard/delivery-challan-approval/approval/${row.ChallanID}`}
             className="inline-flex items-center gap-2 bg-green-600 text-white px-1 py-1 rounded-md transition-colors duration-200 shadow-sm hover:shadow-md"
             title="View Details"
           >

@@ -1,39 +1,16 @@
 "use client"
 import {useState, useEffect} from 'react'
 import convertDateFormat from '@/utils/convertDateFormat';
-import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import Axios from '@/utils/axios';
-import { useSession } from 'next-auth/react';
+import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 
 const Page = ({params}) => {
-     const { data: session } = useSession();
-       const userID = session?.user?.id;
   const [state, setState] = useState({
     status: 'pending',
     data: null
   })
-  console.log("Challan Details" , );
- const [formData, setFormData] = useState({
-    ApprovalComments: '',
-  });
-  const router = useRouter();
-  const handleChecked = async () => {
-    const userData = {
-        ChallanID: state.data?.ChallanMaster.ChallanID,
-        CheckedComments: null,
-        AuthComments: null,
-        CheckedComments: formData.ApprovalComments,
-        UserID: userID
-      };
-    const res = await Axios.post(
-      `?action=create_sndApprovalDetailsChallan&ChallanID=${params.id}`,
-      userData
-    );
-    console.log('Approval Response:', res.data)
-    router.push('/dashboard/delivery-challan-approval');
-  };
+console.log("Delivery Challan ",state.data);
   const getData = async id => {
     try {
       const res = await Axios.get(`?action=get_ChallanOrderDetails&ChallanID=${id}`)
@@ -99,6 +76,24 @@ const Page = ({params}) => {
   
   return (
     <div className="container mx-auto px-4 py-8 max-w-6xl">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">Delivery Challan</h1>
+          <p className="text-gray-600 mt-1">View and print delivery challan details</p>
+        </div>
+        <div className="flex items-center gap-3">
+          <Link
+            href={`/dashboard/delivery-challan/preview/sales/${params.id}`}
+            className="px-5 py-2.5 bg-primary1 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            Preview
+          </Link>
+        </div>
+      </div>
 
       {/* Main Challan Container */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
@@ -155,7 +150,7 @@ const Page = ({params}) => {
 
             {/* Delivery Point Information Card */}
            {
-             ChallanMaster.RetailerCode && (<>
+            ChallanMaster.RetailerCode && (<>
                <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
                  <div className="flex items-center gap-2 mb-3">
                    <div className="w-2 h-4 bg-green-500 rounded"></div>
@@ -274,44 +269,20 @@ const Page = ({params}) => {
 
        
       </div>
-  {/* Action Card */}
-      <div className="bg-white rounded-lg shadow-md border border-gray-200   mt-6 ">
-        
-        <div className="p-4">
-          <div className="mb-4">
-            <label
-              htmlFor="ApprovalComments"
-              className="block text-sm font-semibold text-gray-700 mb-2"
-            >
-              Approval Comment
-            </label>
-            <textarea
-              id="ApprovalComments"
-              className="w-full px-4 py-3  border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#FF6F0B] focus:border-[#FF6F0B] transition-colors duration-200 resize-none"
-              name="ApprovalComments"
-              rows="4"
-              placeholder="Enter your comments here..."
-              value={formData.ApprovalComments}
-              onChange={e => {
-                setFormData({
-                  ...formData,
-                  ApprovalComments: e.target.value,
-                });
-              }}
-            />
-          </div>
-          
-          <div className="flex flex-col sm:flex-row gap-3 justify-end">
-           
-            <button
-              className="px-6 py-3 bg-primary1 text-white font-semibold rounded-lg transition-colors duration-200 shadow-sm hover:shadow-md"
-              onClick={handleChecked}
-            >
-              Approved
-            </button>
-          </div>
-        </div>
-      </div>
+  <div className="grid grid-cols-3 gap-8 mt-16 text-center text-sm">
+              <div className="border-t-2 border-black pt-2">
+                <p className="font-semibold">Prepared By</p>
+                <p >{state.data.ChallanMaster.SalesOrderUserName }</p>
+              </div>
+              <div className="border-t-2 border-black pt-2">
+                <p className="font-semibold">Verified By</p>
+                <p >{state.data.ChallanMaster.AuthorizedUserName }</p>
+              </div>
+              <div className="border-t-2 border-black pt-2">
+                <p className="font-semibold">Authorized By</p>
+                <p >{state.data.ChallanMaster.ApprovedUserName }</p>
+              </div>
+            </div>
     
     </div>
   )

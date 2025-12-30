@@ -4,6 +4,7 @@ import { useRouter } from 'next/navigation';
 import { FaCheckCircle } from 'react-icons/fa';
 import useGetData from '@/utils/useGetData';
 import DataTable from '../table/DataTable';
+import { useSession } from 'next-auth/react';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const SalesPendingList = () => {
@@ -11,6 +12,7 @@ const SalesPendingList = () => {
   const salesorderList = useGetData(
     '?action=get_salesordersChallan'
   );
+  console.log('Sales Order List:', salesorderList);
   const [selectedRows, setSelectedRows] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 

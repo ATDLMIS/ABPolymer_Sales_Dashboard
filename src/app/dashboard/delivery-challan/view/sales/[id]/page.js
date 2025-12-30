@@ -10,7 +10,7 @@ const Page = ({params}) => {
     status: 'pending',
     data: null
   })
-
+console.log("Delivery Challan ",state.data);
   const getData = async id => {
     try {
       const res = await Axios.get(`?action=get_ChallanOrderDetails&ChallanID=${id}`)
@@ -43,40 +43,7 @@ const Page = ({params}) => {
     return `${day} -${month} -${year}`;
   }
 
-  // Handle print with better styling
-  const handlePrint = () => {
-    const printContent = document.getElementById('print-area');
-    const newWindow = window.open('', '_blank', 'width=900,height=650');
-    
-    newWindow.document.write(`
-      <html>
-        <head>
-          <title>Delivery Challan - ${state.data?.ChallanMaster?.ChallanNo || 'Challan'}</title>
-          <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-          <style>
-            body { margin: 0; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-            @media print {
-              body { padding: 0; }
-              .no-print { display: none; }
-              .print-area { box-shadow: none; border: 1px solid #ddd; }
-            }
-            table { border-collapse: collapse; }
-            th, td { border: 1px solid #e5e7eb; }
-          </style>
-        </head>
-        <body>
-          <div class="print-area">${printContent.innerHTML}</div>
-          <script>
-            window.onload = function() {
-              window.print();
-              setTimeout(() => window.close(), 1000);
-            }
-          </script>
-        </body>
-      </html>
-    `);
-    newWindow.document.close();
-  }
+ 
 
   if(state.status === 'pending'){
     return (
@@ -114,10 +81,10 @@ const Page = ({params}) => {
           <h1 className="text-3xl font-bold text-gray-800">Delivery Challan</h1>
           <p className="text-gray-600 mt-1">View and print delivery challan details</p>
         </div>
-        <div className="flex items-center gap-3">
+        {/* <div className="flex items-center gap-3">
           <Link
             href={`/dashboard/delivery-challan/preview/sales/${params.id}`}
-            className="px-5 py-2.5 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
+            className="px-5 py-2.5 bg-primary1 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -125,27 +92,18 @@ const Page = ({params}) => {
             </svg>
             Preview
           </Link>
-          <button
-            onClick={handlePrint}
-            className="px-5 py-2.5 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-            </svg>
-            Print
-          </button>
-        </div>
+        </div> */}
       </div>
 
       {/* Main Challan Container */}
-      <div id="print-area" className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
+      <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         
         {/* Header with Company Info */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
           <div className="flex flex-col md:flex-row justify-between items-center mb-6">
             <div>
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-primary1 rounded-lg flex items-center justify-center">
                   <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                   </svg>
@@ -155,7 +113,7 @@ const Page = ({params}) => {
               <p className="text-gray-600 text-sm">Asian AB Polymer Ltd.</p>
             </div>
             <div className="mt-4 md:mt-0 text-right">
-              <div className="text-lg font-bold text-blue-600">{ChallanMaster.ChallanNo}</div>
+              <div className="text-lg font-bold text-primary1">{ChallanMaster.ChallanNo}</div>
               <div className="text-gray-600 text-sm mt-1">
                 Date: {formatDateWithDashes(ChallanMaster.ChallanDate)}
               </div>
@@ -191,30 +149,34 @@ const Page = ({params}) => {
             </div>
 
             {/* Delivery Point Information Card */}
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-4 bg-green-500 rounded"></div>
-                <h3 className="font-semibold text-gray-700">Delivery Point</h3>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex">
-                  <span className="font-medium text-gray-600 min-w-[120px]">Retailer:</span>
-                  <span className="text-gray-800">
-                    {ChallanMaster.RetailerCode || 'N/A'} - {ChallanMaster.RetailerName || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="font-medium text-gray-600 min-w-[120px]">Contact:</span>
-                  <span className="text-gray-800">
-                    {ChallanMaster.ContactPersonName || 'N/A'}, {ChallanMaster.ContactPhone1 || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="font-medium text-gray-600 min-w-[120px]">Address:</span>
-                  <span className="text-gray-800">{ChallanMaster.Address || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
+           {
+            ChallanMaster.RetailerCode && (<>
+               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
+                 <div className="flex items-center gap-2 mb-3">
+                   <div className="w-2 h-4 bg-green-500 rounded"></div>
+                   <h3 className="font-semibold text-gray-700">Delivery Point</h3>
+                 </div>
+                 <div className="space-y-2 text-sm">
+                   <div className="flex">
+                     <span className="font-medium text-gray-600 min-w-[120px]">Retailer:</span>
+                     <span className="text-gray-800">
+                       {ChallanMaster.RetailerCode || 'N/A'} - {ChallanMaster.RetailerName || 'N/A'}
+                     </span>
+                   </div>
+                   <div className="flex">
+                     <span className="font-medium text-gray-600 min-w-[120px]">Contact:</span>
+                     <span className="text-gray-800">
+                       {ChallanMaster.ContactPersonName || 'N/A'}, {ChallanMaster.ContactPhone1 || 'N/A'}
+                     </span>
+                   </div>
+                   <div className="flex">
+                     <span className="font-medium text-gray-600 min-w-[120px]">Address:</span>
+                     <span className="text-gray-800">{ChallanMaster.Address || 'N/A'}</span>
+                   </div>
+                 </div>
+               </div>
+             </>)
+           }
           </div>
         </div>
 
@@ -305,69 +267,23 @@ const Page = ({params}) => {
           </div>
         </div>
 
-        {/* Footer Signatures Section */}
-        <div className="bg-gray-50 p-6 border-t border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="h-20 flex items-end justify-center">
-                <div className="w-48 border-t border-gray-400 pt-2"></div>
-              </div>
-              <div className="text-lg font-semibold text-gray-700 mt-4">Prepared By</div>
-              <div className="text-sm text-gray-600 mt-1">
-                {ChallanMaster.UserName || 'N/A'}
-                {ChallanMaster.Designation && `, ${ChallanMaster.Designation}`}
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="h-20 flex items-end justify-center">
-                <div className="w-48 border-t border-gray-400 pt-2"></div>
-              </div>
-              <div className="text-lg font-semibold text-gray-700 mt-4">Verified By</div>
-              <div className="text-sm text-gray-600 mt-1">
-                {ChallanMaster.EmployeeName || 'N/A'}
-              </div>
-            </div>
-            
-            <div className="text-center">
-              <div className="h-20 flex items-end justify-center">
-                <div className="w-48 border-t border-gray-400 pt-2"></div>
-              </div>
-              <div className="text-lg font-semibold text-gray-700 mt-4">Authorized By</div>
-              <div className="text-sm text-gray-600 mt-1">
-                {ChallanMaster.ApprovedUserName || 'N/A'}
-                {ChallanMaster.ApprovedDesignation && `, ${ChallanMaster.ApprovedDesignation}`}
-              </div>
-            </div>
-          </div>
-          
-          {/* Footer Note */}
-          <div className="mt-8 pt-6 border-t border-gray-200 text-center">
-            <p className="text-sm text-gray-500">
-              This is a computer generated challan. For any query, contact: +8801847055239
-            </p>
-          </div>
-        </div>
+       
       </div>
-
-      {/* Action Buttons */}
-      <div className="mt-8 flex justify-center gap-4 no-print">
-        <button
-          onClick={() => window.history.back()}
-          className="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200"
-        >
-          Back
-        </button>
-        <button
-          onClick={handlePrint}
-          className="px-6 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Print Challan
-        </button>
-      </div>
+  <div className="grid grid-cols-3 gap-8 mt-16 text-center text-sm">
+              <div className="border-t-2 border-black pt-2">
+                <p className="font-semibold">Prepared By</p>
+                <p >{state.data.ChallanMaster.SalesOrderUserName }</p>
+              </div>
+              <div className="border-t-2 border-black pt-2">
+                <p className="font-semibold">Verified By</p>
+                <p >{state.data.ChallanMaster.AuthorizedUserName }</p>
+              </div>
+              <div className="border-t-2 border-black pt-2">
+                <p className="font-semibold">Authorized By</p>
+                <p >{state.data.ChallanMaster.ApprovedUserName }</p>
+              </div>
+            </div>
+    
     </div>
   )
 }

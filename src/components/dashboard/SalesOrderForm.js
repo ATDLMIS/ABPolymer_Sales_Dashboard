@@ -17,7 +17,6 @@ import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 
 
 const SalesOrderForm = ({ session }) => {
-  const [open, setOpen] = useState(false);
   const [allRetailers, setAllRetailers] = useState([]);
   const [partyDetails,setPartyDetails]=useState({});
   const [refreshKey, setRefreshKey] = useState(0);
@@ -451,26 +450,7 @@ const SalesOrderForm = ({ session }) => {
                 </div>
               )}
                   
-              {open ? (
-                <RetailerModalForm
-                  partyID={formData.PartyID}
-                  setAllRetailers={setAllRetailers}
-                  setRefreshKey={setRefreshKey}
-                  UserID={session.user.id}
-                  open={open} 
-                  setOpen={setOpen}
-                />
-              ) : (
-                <div className="flex justify-end">
-                  <button
-                    type="button"
-                    className="px-3 py-1 mt-3 bg-primary1 text-white rounded-md shadow hover:bg-primary1 transition"
-                    onClick={() => setOpen(!open)}
-                  >
-                    Add Retailer
-                  </button>
-                </div>
-              )}
+              
             </div>
           </div>
 

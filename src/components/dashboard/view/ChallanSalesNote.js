@@ -8,7 +8,6 @@ const ChallanSalesNote = ({id}) => {
     const receiptData = useGetData(
         `?action=get_ChallanOrderDetails&ChallanID=${id}`
       );
-      console.log("Challan Data",receiptData)
 
       const handlePrint = () => {
         const printContent = document.getElementById('print-area');

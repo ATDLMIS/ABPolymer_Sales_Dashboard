@@ -2,15 +2,17 @@
 import { FaEye, FaRegEdit } from 'react-icons/fa';
 import Link from 'next/link';
 import useGetData from '@/utils/useGetData';
-import convertDateFormat from '@/utils/convertDateFormat';
-import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 import DataTable from '../table/DataTable';
+import { useSession } from 'next-auth/react';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const SaleOrderList = () => {
-  const url ='?action=get_salesorders'
+  const { data: session } = useSession();
+  const userID = session?.user?.id;
+  const url = `?action=get_salesorders_users&UserID=${userID}`;
 
 const { status, data } = useGetData(url);
+
   // Define table columns
   const columns = [
     {
@@ -31,7 +33,7 @@ const { status, data } = useGetData(url);
       width: '15%'
     },
     {
-      key: 'partyname',
+      key: 'PartyName',
       header: 'Party Name',
       width: '20%'
     },
@@ -46,7 +48,7 @@ const { status, data } = useGetData(url);
       width: '10%'
     },
     {
-      key: 'logUserName',
+      key: 'LogUserName',
       header: 'Log User Name',
       width: '150%'
     },

@@ -1,88 +1,37 @@
 "use client"
-import {useState, useEffect} from 'react'
+import {useState, useEffect, use} from 'react'
 import getCurrentDate from '@/utils/getCurrentDate';
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
-import useGetData from '@/utils/useGetData';
 import { v4 as uuidv4 } from 'uuid';
 import { AiOutlineCloseCircle } from 'react-icons/ai';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Axios from '@/utils/axios';
+import convertDateFormat from '@/utils/convertDateFormat';
+import useGetData from '@/utils/useGetData';
+import Loading from '@/components/Loading';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-
 const page = ({params}) => {
-  const [formData, setFormData] = useState({
-    InvoiceNo: '',
-    InvoiceDate: getCurrentDate(),
-    SalesOrderNo: '',
-    ChallanID: '',
-    ChallanNo: '',
-    TotalAmount: '',
-    UserID: '',
-    Details: [],
-    DetailsCost: [
-    {
-      id: uuidv4(),
-      ParticularsID: '',
-      Quantity: '',
-      UnitPrice: ''
-    }
-    ]
-  })
-
   const {data: session} = useSession()
-
-  console.log(formData)
-
-  const [partyName, setPartyName] = useState('')
-
-  const costType = useGetData('?action=get_allparticulars')
-
-
-
+  const[isLoading, setIsLoading] = useState(false)
+  const [invoiceNo, setInvoiceNo] = useState('');
+  const [challanData, setChallanData] = useState();
+ const [invoiceDate, setInvoiceDate] = useState()
   const createInvoiceId = async ()=>{
     const res = await Axios.post('?action=generate_new_invoice_number')
-    setFormData( prevData => ({
-      ...prevData,
-      InvoiceNo: res.data.newInvoiceNo,
-    }))
+    setInvoiceNo(res.data.newInvoiceNo)
   }
+
+    useEffect(()=>{
+      setInvoiceDate(getCurrentDate())
+    }, [params.id])
 
   const getPreviousData = async id =>{
+    setIsLoading(true)
     const res = await Axios.get(`?action=get_ChallanToInvoice&ChallanID=${id}`)
-    setFormData( prevData => ({
-      ...prevData,
-      SalesOrderNo: res.data.ChallanMaster.SalesOrderNo,
-      ChallanID: res.data.ChallanMaster.ChallanID,
-      ChallanNo: res.data.ChallanMaster.ChallanNo,
-      Details: res.data.ChallanDetails.map(item => ({
-        id: uuidv4(),
-        FinancialYearID: item.FinancialYearID,
-        FinancialYear: item.FinancialYear,
-        ProductCategoryID: item.ProductCategoryID,
-        ProductID: item.ProductID,
-        ProductName: item.ProductName,
-        Quantity: item.ChallanQty,
-        UnitPrice: item.PRate,
-        discount: 0,
-        Total: item.Total
-      }))
-    }))
-    setPartyName(res.data.ChallanMaster.PartyName)
+       setChallanData(res.data);
+       setIsLoading(false)
   }
-
-  useEffect(()=>{
-if(session){
-  setFormData(prevData =>({
-    ...prevData,
-    UserID: session.user.id
-  }))
-}
-  }, [session])
-
-  useEffect(()=>{
-    createInvoiceId()
-  }, [])
 
   useEffect(()=>{
     if(params.id){
@@ -90,364 +39,277 @@ if(session){
     }
   }, [params.id])
 
+  useEffect(()=>{
+    createInvoiceId()
+  }, [])
+
+
+
   const router = useRouter()
 
-const handleSubmit = async e =>{
-  e.preventDefault()
-  const dataWillSubmit = {
-    InvoiceNo: formData.InvoiceNo,
-    InvoiceDate: formData.InvoiceDate,
-    ChallanID: formData.ChallanID,
-    UserID: formData.UserID,
-    TotalAmount: formData.Details.reduce((accumulator, item) => accumulator + Number(item.Total), 0),
-    Inword: 0,
-    Details: formData.Details.map(item => ({
-      FinancialYearID: item.FinancialYearID,
-      ProductCategoryID: item.ProductCategoryID,
-      ProductID: item.ProductID,
-      Quantity: item.Quantity,
-      UnitPrice: item.UnitPrice,
-      Discount: item.discount
-    })),
-    DetailsCost: formData.DetailsCost.map(item =>({
-      ParticularsID: item.ParticularsID,
-      Quantity: item.Quantity,
-      UnitPrice: item.UnitPrice
-    }))
+  const handleSubmit = async e =>{
+    e.preventDefault()
+    
+
+    const dataWillSubmit = {
+      InvoiceNo: invoiceNo,
+      InvoiceDate: invoiceDate,
+      ChallanID: params.id,
+      UserID: session.user.id,
+      TotalAmount:   challanData?.ChallanDetails.reduce((acc, item) => acc + Number(item.GrandTotal), 0),
+  Inword: 0
+};
+
+    console.log('Submitting data:', dataWillSubmit); // For debugging
+
+    try {
+      const res = await Axios.post('?action=Create_InvoiceAll', dataWillSubmit);
+      console.log('Invoice creation response:', res.data);
+      if (res.data.error) {
+        alert(`Error: ${res.data.error}`);
+      } else {
+        alert('Invoice created successfully!');
+        router.push('/dashboard/invoice-bill');
+      }
+    } catch (error) {
+      console.error('Error creating invoice:', error);
+      alert('Failed to create invoice. Please try again.');
+    }
   }
 
- const res = await Axios.post('?action=Create_InvoiceAll', dataWillSubmit)
- router.push('/dashboard/invoice-bill')
-}
-
-    return (
-      <>
-        <div className="flex justify-between items-center">
-          <h1 className="text-2xl capitalize mb-3">Add Invoice</h1>
-          <form>
-            <input
-              name="search"
-              type="text"
-              placeholder="Search"
-              className="text-md outline-1 border-1 focus:ring-0 rounded-md w-[300px] text-sm"
-            />
-          </form>
+ 
+if (isLoading) {
+    return <div className="flex justify-center items-center min-h-screen">
+      <div className="text-center">
+        <div className="loader mb-4"></div>
+        <p className="text-gray-600"><Loading/></p>
+      </div>
+    </div>;
+  }
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {/* Header */}
+      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">Create Invoice</h1>
+        <div className="w-full lg:w-auto">
+          <input
+            name="search"
+            type="text"
+            placeholder="Search..."
+            className="w-full lg:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
         </div>
-        <div className="w-full bg-gray-200 rounded-md px-4 py-4">
-          <form onSubmit={handleSubmit}>
-            <div>
-              <label
-                htmlFor="designation"
-                className="capitalize flex font-semibold text-md py-1"
-              >
-                Invoice No:
+      </div>
+
+      {/* Main Form */}
+      <div className="bg-white rounded-lg shadow-lg p-6">
+        <form onSubmit={handleSubmit}>
+          {/* Basic Information Grid */}
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Challan No
               </label>
-              <input
-                className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                value={formData.InvoiceNo}
-                readOnly
-              />
-              <div>
-                <label className="capitalize flex font-semibold text-md py-1">
-                  Invoice Date:
-                </label>
-  
-                <input
-                className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                value={formData.InvoiceDate}
-                readOnly
-              />
-              </div>
-              <label className="capitalize flex font-semibold text-md py-1">Sales Order No:</label>
-              <input
-                className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                value={formData.SalesOrderNo}
-                readOnly
-              />
-              <label className="capitalize flex font-semibold text-md py-1">Challan No:</label>
-              <input
-                className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                value={formData.ChallanNo}
-                readOnly
-              />
-              
-              <label className="capitalize flex font-semibold text-md py-1">Party Name:</label>
-              <input
-                className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                value={partyName}
-                readOnly
-              />
+              <div className="text-sm font-semibold">{challanData?.ChallanMaster.ChallanNo}</div>
             </div>
-            {/* table Start */}
-            <div className="flex flex-col">
-              <h1 className="text-2xl capitalize my-2">Product Details</h1>
-              <div className="overflow-x-auto">
-                <div className="inline-block max-w-full w-full pt-5">
-                  <div className="overflow-hidden">
-                    <table className="max-w-full w-full border border-neutral-200 text-center text-sm font-light text-surface dark:border-white/10 dark:text-white">
-                      <thead className="border-b border-neutral-200 font-medium dark:border-white/10">
-                        <tr className="bg-text1 text-white">
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Financial Year
-                          </th>
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Product Name
-                          </th>
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Qty
-                          </th>
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Price
-                          </th>
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Discount
-                          </th>
-                          <th scope="col" className="px-6 py-4">
-                            Total
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                      {formData.Details.length > 0 && formData.Details.map(item =>(
-                        <tr className="border-b border-neutral-200 dark:border-white/10" key={item.id}>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                            {item.FinancialYear}
-                          </td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                            {item.ProductName}
-                          </td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                            {item.Quantity}
-                          </td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                           {item.UnitPrice}
-                          </td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                          <input
-                            type="number"
-                            className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                            onChange={e=>{
-                              setFormData(prevData =>({
-                                ...prevData,
-                                Details: prevData.Details.map(detail => detail.id == item.id ? {...detail, discount: e.target.value} : detail)
-                              }));
-                            }}
-                            value={item.discount}
-                          />
-                          </td>
-                          <td className="whitespace-nowrap px-6 py-4 flex justify-center gap-3">
-                            {formatAmountWithCommas(Number(item.Total))}
-                          </td>
-                        </tr>
-                      ))}
-                        
-                        <tr className="border-b border-neutral-200 dark:border-white/10">
-                          <td
-                            className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10"
-                            colSpan="4"
-                          ></td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                            Total
-                          </td>
-  
-                          <td className="whitespace-nowrap px-6 py-4 flex justify-center gap-3">
-                            {formatAmountWithCommas(formData.Details.length > 0 && formData.Details.reduce((accumulator, currentValue) => accumulator + Number(currentValue.Total), 0) || 0.00)}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm   text-gray-500 mb-1">
+                Challan Date
+              </label>
+              <div className="text-sm font-semibold text-gray-700">
+                {challanData?.ChallanMaster.ChallanDate}
+              </div>
+            </div>
+
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm   text-gray-500 mb-1">
+                Sales Order No
+              </label>
+              <div className="text-sm font-semibold text-gray-700">
+                {challanData?.ChallanMaster.SalesOrderNo}
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Invoice No
+              </label>
+              <div className="text-sm font-semibold text-gray-700">
+                {invoiceNo}
+              </div>
+            </div>
+            <div className="bg-gray-50 p-4 rounded-lg">
+              <label className="block text-sm font-medium text-gray-500 mb-1">
+                Invoice Date
+              </label>
+              <div className="text-sm font-semibold text-gray-700">
+                {invoiceDate}
+              </div>
+            </div>
+          </div>
+
+          <div className="mb-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Party Information
+                </h3>
+
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-gray-500">Party Name</span>
+                    <div className="font-medium text-gray-800">
+                      {challanData?.ChallanMaster.PartyName || 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-gray-500">Contacts</span>
+                    <div>
+                      {challanData?.ChallanMaster.ContactName || 'N/A'}
+                    </div>
+                  </div>
+
+                  <div className="flex justify-between">
+                    <span className="font-semibold text-gray-500">Address</span>
+                    <div>{challanData?.ChallanMaster.PresentAddress || 'N/A'}</div>
                   </div>
                 </div>
               </div>
-            </div>
-  
-            {/* table Start */}
-            <div className="flex flex-col">
-              <h1 className="text-2xl capitalize mb-3">Others Expense</h1>
-              <div className="overflow-x-auto">
-                <div className="inline-block max-w-full w-full pt-5">
-                  <div className="overflow-hidden">
-                    <table className="max-w-full w-full border border-neutral-200 text-center text-sm font-light text-surface dark:border-white/10 dark:text-white">
-                      <thead className="border-b border-neutral-200 font-medium dark:border-white/10">
-                        <tr className="bg-text1 text-white">
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Particulars
-                          </th>
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            QTY
-                          </th>
-  
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Price
-                          </th>
 
-                          <th
-                            scope="col"
-                            className="border-e border-neutral-200 px-6 py-4 dark:border-white/10"
-                          >
-                            Total
-                          </th>
-  
-                          <th scope="col" className="px-6 py-4">
-                            Action
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {formData.DetailsCost.length > 0 && formData.DetailsCost.map(item =>(
-                          <tr className="border-b border-neutral-200 dark:border-white/10" key={item.id}>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                          <select
-                            className="w-full rounded-md"
-                            onChange={e => {
-                              setFormData(prevData =>({
-                                ...prevData,
-                                DetailsCost: prevData.DetailsCost.map(detail => detail.id == item.id ? {...detail, ParticularsID: e.target.value} : detail)
-                              }));
-                            }}
-                            value={item.ParticularsID}
-                            required
-                          >
-                            <option value=""></option>
-                            {costType.data.length > 0 &&
-                              costType.data.map(item => (
-                                <option value={item.ParticularsID} key={item.ParticularsID}>
-                                  {item.ParticularsName}
-                                </option>
-                              ))}
-                          </select>
-                          </td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                          <input
-                            type="number"
-                            className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                            onChange={e=>{
-                              setFormData(prevData =>({
-                                ...prevData,
-                                DetailsCost: prevData.DetailsCost.map(detail => detail.id == item.id ? {...detail, Quantity: e.target.value} : detail)
-                              }));
-                            }}
-                            value={item.Quantity}
-                          />
-                          </td>
-  
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                          <input
-                            type="number"
-                            className="text-md outline-1 border-1 focus:ring-0 rounded-md w-full block text-sm"
-                            onChange={e=>{
-                              setFormData(prevData =>({
-                                ...prevData,
-                                DetailsCost: prevData.DetailsCost.map(detail => detail.id == item.id ? {...detail, UnitPrice: e.target.value} : detail)
-                              }));
-                            }}
-                            value={item.UnitPrice}
-                          />
-                          </td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                            {formatAmountWithCommas(item.Quantity && item.UnitPrice ? Number(item.Quantity) * Number(item.UnitPrice) : 0.00)}
-                          </td>
-  
-                          <td className="whitespace-nowrap px-6 py-4 flex justify-center gap-3">
-                            <AiOutlineCloseCircle
-                              className="text-4xl text-red-500 cursor-pointer"
-                              onClick={() => {
-                                setFormData( prevData =>({
-                                  ...prevData,
-                                  DetailsCost: formData.DetailsCost.filter(
-                                    detail => detail.id !== item.id
-                                  ),
-                                }));
-                              }}
-                            />
-                          </td>
-                        </tr>
-                        ))}
+               {challanData?.ChallanMaster.RetailderName && (
+              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                <h3 className="text-lg font-semibold text-gray-800 mb-3">
+                  Retailer Information
+                </h3>
 
-                        <tr>
-                        <td
-                          className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium "
-                          colSpan="5"
-                        >
-                          <div className="flex justify-end">
-                            <button
-                              type="button"
-                              className="bg-green-300 text-md rounded-md px-4 py-2"
-                              onClick={() => {
-                                setFormData({
-                                  ...formData,
-                                  DetailsCost: [
-                                    ...formData.DetailsCost,
-                                    {
-                                      id: uuidv4(),
-                                      ParticularsID: '',
-                                      Quantity: '',
-                                      UnitPrice: ''
-                                    },
-                                  ],
-                                });
-                              }}
-                            >
-                              Add New Row
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                       
-                        <tr className="border-b border-neutral-200 dark:border-white/10">
-                          <td
-                            className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10"
-                            colSpan="2"
-                          ></td>
-                          <td className="whitespace-nowrap border-e border-neutral-200 px-6 py-4 font-medium dark:border-white/10">
-                            Total
-                          </td>
-  
-                          <td className="whitespace-nowrap px-6 py-4 flex justify-center gap-3">
-                            {formatAmountWithCommas(formData.DetailsCost.length > 0 ? formData.DetailsCost.reduce((accumulator, item) => accumulator + (Number(item.Quantity) * Number(item.UnitPrice)), 0) : 0.00)}
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
+               
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-gray-500">Retailer Name</span>
+                      <div className="font-medium text-gray-800">
+                         {challanData?.ChallanMaster.RetailderName || 'N/A'}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-gray-500">Contacts</span>
+                      <div>
+                        {challanData?.ChallanMaster.RetailerContactPerson || 'N/A'}
+                      </div>
+                    </div>
+
+                    <div className="flex justify-between">
+                      <span className="font-semibold text-gray-500">Address</span>
+                      <div>{challanData?.ChallanMaster.RetailerAddress || 'N/A'}</div>
+                    </div>
                   </div>
-                </div>
+                
               </div>
+            )}
             </div>
-  
-            <div className="mt-5">
-              <button className="capitalize bg-primary1 px-5 py-1 text-white rounded-md w-full">
-                Save invoice
-              </button>
+          </div>
+
+          {/* Product Details Section */}
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Product Details</h2>
+            
+            <div className="overflow-x-auto rounded-lg border border-gray-200">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sales Order
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Product Name
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Qty
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Price
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Sub Total
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Dis. %
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Net Amount
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      App.Dis. %
+                    </th>
+                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Grand Total
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {/* Directly map groupedItems (which is now an array) */}
+                  {challanData?.ChallanDetails.map((item) => (
+                    <tr key={item.id} className="hover:bg-gray-50">
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {item.SalesOrderNo}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900">
+                        {item.ProductName}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {item.OrderQty}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {formatAmountWithCommas(Number(item.price))}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {formatAmountWithCommas(Number(item.subTotal))}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {item.DiscountPercentage}%
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {formatAmountWithCommas(Number(item.NetAmount))}
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {item.AppDisPercent}%
+                      </td>
+                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                        {formatAmountWithCommas(Number(item.GrandTotal))}
+                      </td>
+                    </tr>
+                  ))}
+                  
+                  {/* Total Row */}
+                  <tr className="bg-gray-50 font-semibold">
+                    <td colSpan="8" className="px-4 py-3 text-right text-sm text-gray-700">
+                      Grand Total:
+                    </td>
+                    <td className="px-4 py-3 text-right text-sm text-green-600">
+                      {formatAmountWithCommas(
+                        challanData?.ChallanDetails.reduce((acc, item) => acc + Number(item.GrandTotal), 0)
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-          </form>
-        </div>
-      </>
-    );
-  };
-  
-  export default page;
-  
+          </div>
+
+          {/* Submit Button */}
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="bg-primary1 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            >
+              Save Invoice
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+};
+
+export default page;

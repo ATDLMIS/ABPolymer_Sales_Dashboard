@@ -1,10 +1,9 @@
 "use client"
-import { useState } from 'react';
-import SalesPendingList from '@/components/dashboard/invoice/SalesPendingList';
-import SpecimanPendingList from '@/components/dashboard/invoice/SpecimanPendingList';
 import SalesCompleteList from '@/components/dashboard/invoice/SalesCompleteList';
+import SalesPendingList from '@/components/dashboard/invoice/SalesPendingList';
 import SpecimanCompleteList from '@/components/dashboard/invoice/SpecimanCompleteList';
-
+import SpecimanPendingList from '@/components/dashboard/invoice/SpecimanPendingList';
+import { useState } from 'react';
 const page = () => {
   const [current, setCurrent] = useState('sales');
      const [activeTab, setActiveTab] = useState('pending')

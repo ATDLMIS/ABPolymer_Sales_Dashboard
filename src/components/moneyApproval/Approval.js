@@ -29,11 +29,11 @@ const handleReject = async () => {
     const userData = {
         MRID: state.data.receipt.MRID,
         CheckedComments: null,
-        AuthComments: formData.ApprovalComments ||'',
-        AppComments: '',
+        AuthComments: null,
+        AppComments: formData.ApprovalComments,
         UserID: userID
       };
-      console.log('Approval Data:', userData);
+      console.log("Approval Data", userData);
     const res = await Axios.post(
       `?action=create_sndApprovalDetailsMR&MRID=${params.id}`,
       userData

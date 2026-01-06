@@ -1,315 +1,410 @@
 "use client"
-import {useState, useEffect, use} from 'react'
-import getCurrentDate from '@/utils/getCurrentDate';
-import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
-import { v4 as uuidv4 } from 'uuid';
-import { AiOutlineCloseCircle } from 'react-icons/ai';
-import { useSession } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import Axios from '@/utils/axios';
-import convertDateFormat from '@/utils/convertDateFormat';
-import useGetData from '@/utils/useGetData';
-import Loading from '@/components/Loading';
-process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
-const page = ({params}) => {
-  const {data: session} = useSession()
-  const[isLoading, setIsLoading] = useState(false)
-  const [invoiceNo, setInvoiceNo] = useState('');
-  const [challanData, setChallanData] = useState();
- const [invoiceDate, setInvoiceDate] = useState()
-  const createInvoiceId = async ()=>{
-    const res = await Axios.post('?action=generate_new_invoice_number')
-    setInvoiceNo(res.data.newInvoiceNo)
+import { useState, useEffect } from 'react'
+import { Save, Search, FileText, Calendar, User, MapPin, Package, AlertCircle, ShoppingCart } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import Axios from '@/utils/axios'
+import getCurrentDate from '@/utils/getCurrentDate'
+import formatAmountWithCommas from '@/utils/formatAmountWithCommas'
+import Loading from '@/components/Loading'
+
+const CreateInvoicePage = ({ params }) => {
+  const { data: session } = useSession()
+  const router = useRouter()
+  const [isLoading, setIsLoading] = useState(false)
+  const [invoiceNo, setInvoiceNo] = useState('')
+  const [challanData, setChallanData] = useState(null)
+  const [invoiceDate, setInvoiceDate] = useState('')
+  const [searchTerm, setSearchTerm] = useState('')
+
+  const createInvoiceId = async () => {
+    try {
+      const res = await Axios.post('?action=generate_new_invoice_number')
+      setInvoiceNo(res.data.newInvoiceNo)
+    } catch (error) {
+      console.error('Error generating invoice number:', error)
+    }
   }
 
-    useEffect(()=>{
-      setInvoiceDate(getCurrentDate())
-    }, [params.id])
+  useEffect(() => {
+    setInvoiceDate(getCurrentDate())
+  }, [params?.id])
 
-  const getPreviousData = async id =>{
+  const getPreviousData = async (id) => {
     setIsLoading(true)
-    const res = await Axios.get(`?action=get_ChallanToInvoice&ChallanID=${id}`)
-       setChallanData(res.data);
-       setIsLoading(false)
+    try {
+      const res = await Axios.get(`?action=get_ChallanToInvoice&ChallanID=${id}`)
+      setChallanData(res.data)
+    } catch (error) {
+      console.error('Error fetching challan data:', error)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
-  useEffect(()=>{
-    if(params.id){
+  useEffect(() => {
+    if (params?.id) {
       getPreviousData(params.id)
     }
-  }, [params.id])
+  }, [params?.id])
 
-  useEffect(()=>{
+  useEffect(() => {
     createInvoiceId()
   }, [])
 
-
-
-  const router = useRouter()
-
-  const handleSubmit = async e =>{
-    e.preventDefault()
-    
-
+  const handleSubmit = async () => {
     const dataWillSubmit = {
       InvoiceNo: invoiceNo,
       InvoiceDate: invoiceDate,
       ChallanID: params.id,
-      UserID: session.user.id,
-      TotalAmount:   challanData?.ChallanDetails.reduce((acc, item) => acc + Number(item.GrandTotal), 0),
-  Inword: 0
-};
+      UserID: session?.user?.id,
+      TotalAmount: challanData?.ChallanDetails.reduce((acc, item) => acc + Number(item.GrandTotal), 0),
+      Inword: 0
+    }
 
-    console.log('Submitting data:', dataWillSubmit); // For debugging
+    console.log('Submitting data:', dataWillSubmit)
 
     try {
-      const res = await Axios.post('?action=Create_InvoiceAll', dataWillSubmit);
-      console.log('Invoice creation response:', res.data);
+      const res = await Axios.post('?action=Create_InvoiceAll', dataWillSubmit)
+      console.log('Invoice creation response:', res.data)
       if (res.data.error) {
-        alert(`Error: ${res.data.error}`);
+        alert(`Error: ${res.data.error}`)
       } else {
-        alert('Invoice created successfully!');
-        router.push('/dashboard/invoice-bill');
+        alert('Invoice created successfully!')
+        router.push('/dashboard/invoice-bill')
       }
     } catch (error) {
-      console.error('Error creating invoice:', error);
-      alert('Failed to create invoice. Please try again.');
+      console.error('Error creating invoice:', error)
+      alert('Failed to create invoice. Please try again.')
     }
   }
 
- 
-if (isLoading) {
-    return <div className="flex justify-center items-center min-h-screen">
-      <div className="text-center">
-        <div className="loader mb-4"></div>
-        <p className="text-gray-600"><Loading/></p>
-      </div>
-    </div>;
+  if (isLoading) {
+    return (
+      <Loading />
+    )
   }
-  return (
-    <div className="container mx-auto px-4 py-6">
-      {/* Header */}
-      <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-6 gap-4">
-        <h1 className="text-2xl font-bold text-gray-800">Create Invoice</h1>
-        <div className="w-full lg:w-auto">
-          <input
-            name="search"
-            type="text"
-            placeholder="Search..."
-            className="w-full lg:w-80 px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-          />
+
+  if (!challanData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="text-center max-w-md bg-white rounded-xl shadow-lg p-8">
+          <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mb-4 mx-auto">
+            <AlertCircle className="w-8 h-8 text-yellow-600" />
+          </div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">No Challan Data Found</h2>
+          <p className="text-gray-600 mb-6">Unable to load challan information.</p>
+          <button 
+            onClick={() => router.back()}
+            className="px-6 py-2.5 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+          >
+            Go Back
+          </button>
         </div>
       </div>
+    )
+  }
 
-      {/* Main Form */}
-      <div className="bg-white rounded-lg shadow-lg p-6">
-        <form onSubmit={handleSubmit}>
-          {/* Basic Information Grid */}
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Challan No
-              </label>
-              <div className="text-sm font-semibold">{challanData?.ChallanMaster.ChallanNo}</div>
-            </div>
+  const grandTotal = challanData?.ChallanDetails.reduce((acc, item) => acc + Number(item.GrandTotal), 0) || 0
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm   text-gray-500 mb-1">
-                Challan Date
-              </label>
-              <div className="text-sm font-semibold text-gray-700">
-                {challanData?.ChallanMaster.ChallanDate}
-              </div>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Header Section */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
+                <FileText className="w-8 h-8 text-primary1" />
+                Create Invoice
+              </h1>
+              <p className="text-gray-600 mt-1">Generate invoice from challan</p>
             </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm   text-gray-500 mb-1">
-                Sales Order No
-              </label>
-              <div className="text-sm font-semibold text-gray-700">
-                {challanData?.ChallanMaster.SalesOrderNo}
-              </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Invoice No
-              </label>
-              <div className="text-sm font-semibold text-gray-700">
-                {invoiceNo}
-              </div>
-            </div>
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Invoice Date
-              </label>
-              <div className="text-sm font-semibold text-gray-700">
-                {invoiceDate}
-              </div>
-            </div>
+            
           </div>
+        </div>
 
-          <div className="mb-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  Party Information
-                </h3>
+        {/* Main Invoice Card */}
+        <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+          <div className="p-8">
+           
+            {/* Invoice and Challan Numbers Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
+              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border border-blue-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Challan No
+                  </label>
+                </div>
+                <div className="text-lg font-bold text-gray-900 ml-13">
+                  {challanData?.ChallanMaster.ChallanNo}
+                </div>
+              </div>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-500">Party Name</span>
-                    <div className="font-medium text-gray-800">
+              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-lg border border-purple-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Challan Date
+                  </label>
+                </div>
+                <div className="text-lg font-bold text-gray-900 ml-13">
+                  {challanData?.ChallanMaster.ChallanDate}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-lg border border-green-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
+                    <ShoppingCart className="w-5 h-5 text-white" />
+                  </div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Sales Order
+                  </label>
+                </div>
+                <div className="text-lg font-bold text-gray-900 ml-13">
+                  {challanData?.ChallanMaster.SalesOrderNo}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-5 rounded-lg border border-indigo-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
+                    <FileText className="w-5 h-5 text-white" />
+                  </div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Invoice No
+                  </label>
+                </div>
+                <div className="text-lg font-bold text-gray-900 ml-13">
+                  {invoiceNo}
+                </div>
+              </div>
+
+              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-lg border border-orange-200">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
+                    <Calendar className="w-5 h-5 text-white" />
+                  </div>
+                  <label className="text-sm font-medium text-gray-600">
+                    Invoice Date
+                  </label>
+                </div>
+                <div className="text-lg font-bold text-gray-900 ml-13">
+                  {invoiceDate}
+                </div>
+              </div>
+            </div>
+
+            {/* Party Information Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+              {/* Party Information */}
+              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border border-slate-200">
+                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-300">
+                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <User className="w-5 h-5 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold text-gray-900">
+                    Party Information
+                  </h3>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Party Name
+                    </div>
+                    <div className="text-base font-semibold text-gray-900">
                       {challanData?.ChallanMaster.PartyName || 'N/A'}
                     </div>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-500">Contacts</span>
-                    <div>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                      Contact Person
+                    </div>
+                    <div className="text-base text-gray-700">
                       {challanData?.ChallanMaster.ContactName || 'N/A'}
                     </div>
                   </div>
 
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-500">Address</span>
-                    <div>{challanData?.ChallanMaster.PresentAddress || 'N/A'}</div>
+                  <div>
+                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                      <MapPin className="w-3 h-3" />
+                      Address
+                    </div>
+                    <div className="text-base text-gray-700">
+                      {challanData?.ChallanMaster.PresentAddress || 'N/A'}
+                    </div>
                   </div>
                 </div>
               </div>
 
-               {challanData?.ChallanMaster.RetailderName && (
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  Retailer Information
-                </h3>
+              {/* Retailer Information */}
+              {challanData?.ChallanMaster.RetailderName && (
+                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
+                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-emerald-300">
+                    <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
+                      <Package className="w-5 h-5 text-white" />
+                    </div>
+                    <h3 className="text-lg font-bold text-gray-900">
+                      Retailer Information
+                    </h3>
+                  </div>
 
-               
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-500">Retailer Name</span>
-                      <div className="font-medium text-gray-800">
-                         {challanData?.ChallanMaster.RetailderName || 'N/A'}
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Retailer Name
+                      </div>
+                      <div className="text-base font-semibold text-gray-900">
+                        {challanData?.ChallanMaster.RetailderName || 'N/A'}
                       </div>
                     </div>
 
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-500">Contacts</span>
-                      <div>
+                    <div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+                        Contact Person
+                      </div>
+                      <div className="text-base text-gray-700">
                         {challanData?.ChallanMaster.RetailerContactPerson || 'N/A'}
                       </div>
                     </div>
 
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-500">Address</span>
-                      <div>{challanData?.ChallanMaster.RetailerAddress || 'N/A'}</div>
+                    <div>
+                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        Address
+                      </div>
+                      <div className="text-base text-gray-700">
+                        {challanData?.ChallanMaster.RetailerAddress || 'N/A'}
+                      </div>
                     </div>
                   </div>
-                
+                </div>
+              )}
+            </div>
+
+            {/* Product Details Section */}
+            <div className="mb-8">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 bg-primary1 rounded-lg flex items-center justify-center">
+                  <Package className="w-5 h-5 text-white" />
+                </div>
+                <h2 className="text-xl font-bold text-gray-900">Product Details</h2>
               </div>
-            )}
+              
+              <div className="overflow-hidden rounded-lg border border-gray-200 shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                      <thead className="bg-gradient-to-r from-gray-700 to-gray-800">
+                      <tr>
+                        <th className="px-4 py-4 text-left text-xs text-white  tracking-wider">
+                          Sales Order No
+                        </th>
+                        <th className="px-4 py-4 text-left text-xs text-white  tracking-wider">
+                          Product Name
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white  tracking-wider">
+                          Qty
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white  tracking-wider">
+                          U.Price
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white tracking-wider">
+                          Sub.T
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white  tracking-wider">
+                          Disc%
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white tracking-wider">
+                          N.Amount
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white  tracking-wider">
+                          Add. 
+                          Disc %
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white  tracking-wider">
+                          G.Total
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {challanData?.ChallanDetails.map((item, index) => (
+                        <tr key={item.id || index} className="hover:bg-gray-50 transition-colors">
+                          <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                            {item.SalesOrderNo}
+                          </td>
+                          <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                            {item.ProductName}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 text-right font-medium">
+                            {item.OrderQty}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 text-right">
+                            {formatAmountWithCommas(Number(item.price) || 0)}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 text-right font-medium">
+                            {formatAmountWithCommas(Number(item.subTotal) || 0)}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-orange-600 text-right font-medium">
+                            {item.DiscountPercentage || '0'}%
+                          </td>
+                          <td className="px-4 py-4 text-sm text-gray-700 text-right font-medium">
+                            {formatAmountWithCommas(Number(item.NetAmount) || 0)}
+                          </td>
+                          <td className="px-4 py-4 text-sm text-orange-600 text-right font-medium">
+                            {item.AppDisPercent || '0'}%
+                          </td>
+                          <td className="px-4 py-4 text-sm text-blue-600 text-right font-bold">
+                            {formatAmountWithCommas(Number(item.GrandTotal) || 0)}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                   <tfoot className="bg-gradient-to-r from-gray-100 to-gray-200">
+                      <tr>
+                        <td colSpan="8" className="px-4 py-4 text-sm font-semibold text-black text-right ">
+                          Grand Total:
+                        </td>
+                        <td className="px-4 py-4 text-sm text-blue-600 text-right font-bold ">
+                         {formatAmountWithCommas(grandTotal)}
+                        </td>
+                      </tr>
+                    </tfoot>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            {/* Submit Button */}
+            <div className="flex justify-end gap-4 pt-6 border-t border-gray-200">
+              <button
+                type="button"
+                onClick={() => router.back()}
+                className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="flex items-center gap-2 px-6 py-2  bg-primary1 text-white rounded-lg  transition-colors shadow-lg font-medium"
+              >
+                <Save className="w-5 h-5" />
+                Save Invoice
+              </button>
             </div>
           </div>
-
-          {/* Product Details Section */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Product Details</h2>
-            
-            <div className="overflow-x-auto rounded-lg border border-gray-200">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sales Order
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Product Name
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Qty
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Price
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Sub Total
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Dis. %
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Net Amount
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      App.Dis. %
-                    </th>
-                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Grand Total
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {/* Directly map groupedItems (which is now an array) */}
-                  {challanData?.ChallanDetails.map((item) => (
-                    <tr key={item.id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {item.SalesOrderNo}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900">
-                        {item.ProductName}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {item.OrderQty}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {formatAmountWithCommas(Number(item.price))}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {formatAmountWithCommas(Number(item.subTotal))}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {item.DiscountPercentage}%
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {formatAmountWithCommas(Number(item.NetAmount))}
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {item.AppDisPercent}%
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                        {formatAmountWithCommas(Number(item.GrandTotal))}
-                      </td>
-                    </tr>
-                  ))}
-                  
-                  {/* Total Row */}
-                  <tr className="bg-gray-50 font-semibold">
-                    <td colSpan="8" className="px-4 py-3 text-right text-sm text-gray-700">
-                      Grand Total:
-                    </td>
-                    <td className="px-4 py-3 text-right text-sm text-green-600">
-                      {formatAmountWithCommas(
-                        challanData?.ChallanDetails.reduce((acc, item) => acc + Number(item.GrandTotal), 0)
-                      )}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-          </div>
-
-          {/* Submit Button */}
-          <div className="flex justify-end">
-            <button
-              type="submit"
-              className="bg-primary1 text-white font-medium py-3 px-8 rounded-lg transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-            >
-              Save Invoice
-            </button>
-          </div>
-        </form>
+        </div>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default page;
+export default CreateInvoicePage

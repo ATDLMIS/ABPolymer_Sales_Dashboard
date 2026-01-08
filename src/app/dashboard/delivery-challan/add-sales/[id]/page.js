@@ -6,7 +6,12 @@ import convertDateFormat from '@/utils/convertDateFormat';
 import getCurrentDate from '@/utils/getCurrentDate';
 import { FiSearch, FiSave, FiChevronLeft } from 'react-icons/fi';
 import Axios from '@/utils/axios';
-
+import Loading from '@/components/Loading';
+import InfoCard from '@/components/Card/InfoCard';
+import { Printer, Download, Search, FileText, Calendar, User, MapPin, Package, Eye, CalendarCheck2 } from 'lucide-react'
+import PartyCard from '@/components/Card/PartyCard';
+import RetailerCard from '@/components/Card/RetailerCard';
+import BackButton from '@/components/BackButton/BackButton';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const Page = ({ params }) => {
@@ -36,7 +41,7 @@ const Page = ({ params }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const router = useRouter();
   const [salesOrderNos, setSalesOrderNos] = useState([]);
-  const [challanQty, setChallanQty] = useState('');
+  
   // New state for trips
   const [allTrips, setAllTrips] = useState([]);
   const [selectedTripID, setSelectedTripID] = useState('');
@@ -53,7 +58,7 @@ const Page = ({ params }) => {
   const fetchAllTrips = async () => {
     try {
       setLoadingTrips(true);
-      const res = await Axios.get('https://asianabpolymer.com/abpolymer/salesforce_api.php?action=get_TripSchedules');
+      const res = await Axios.get('?action=get_TripSchedules');
       if (res.data && Array.isArray(res.data)) {
         setAllTrips(res.data);
       }
@@ -70,7 +75,7 @@ const Page = ({ params }) => {
     
     try {
       setLoadingTrips(true);
-      const res = await Axios.get(`https://asianabpolymer.com/abpolymer/salesforce_api.php?action=get_TripSchedule&TripID=${tripID}`);
+      const res = await Axios.get(`?action=get_TripSchedule&TripID=${tripID}`);
       
       if (res.data) {
         const tripData = res.data;
@@ -207,6 +212,7 @@ const Page = ({ params }) => {
             SalesOrderNo: item.SalesOrderNo,
             SalesOrderID: item.SalesOrderID,
             OrderQty: item.Quantity,
+           ChallanQty: Math.min(item.AvailableQty, item.Quantity),
             AvailQty: item.AvailableQty,
           })),
         }));
@@ -241,6 +247,12 @@ const Page = ({ params }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+       // Validate trip selection
+    if (!selectedTripID) {
+      alert('Please select a trip before creating the challan');
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -264,13 +276,12 @@ const Page = ({ params }) => {
           ProductCategoryID: Number(d.ProductCategoryID),
           ProductID: Number(d.ProductID),
           OrderQty: Number(d.OrderQty),
-          ChallanQty: Number(challanQty),
+          ChallanQty: Number(d.ChallanQty),
           AvailQty: Number(d.AvailQty)
         }))
       };
 
-      const response = await Axios.post(
-        'https://asianabpolymer.com/abpolymer/salesforce_api.php?action=Create_DeliveryChallanAll',
+      const response = await Axios.post('?action=Create_DeliveryChallanAll',
         payload,
         {
           headers: {
@@ -326,11 +337,10 @@ console.log(response.data);
     }
   };
 
+
   if (status === 'loading') {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary1"></div>
-      </div>
+       <Loading />
     );
   }
 
@@ -376,118 +386,50 @@ console.log(response.data);
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="flex items-center mb-6">
-        <button
-          onClick={() => router.back()}
-          className="mr-4 p-2 rounded-full hover:bg-gray-100"
-        >
-          <FiChevronLeft className="text-2xl" />
-        </button>
-        <h1 className="text-2xl font-bold text-gray-800">Add Delivery Challan</h1>
-      </div>
-
-      {/* <div className="flex justify-end mb-6">
-        <div className="relative w-full max-w-md">
-          <input
-            name="search"
-            type="text"
-            placeholder="Search..."
-            className="w-full pl-10 pr-4 py-2 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent"
-          />
-          <FiSearch className="absolute left-3 top-3 text-gray-400" />
-        </div>
-      </div> */}
-
+      <BackButton router={router} title="Create Delivery Challan" />
       <div className="bg-white rounded-lg shadow-md p-6">
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Challan No
-              </label>
-              <div className="text-lg font-semibold">{formData.ChallanNo}</div>
-            </div>
+              <InfoCard
+                         label="Challan No"
+                     value={formData.ChallanNo}
+                     icon={<FileText className="w-5 h-5 text-white" />}
+                       color="blue"
+                      />
 
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Challan Date
-              </label>
-              <div className="text-lg font-semibold">
-                {convertDateFormat(formData.ChallanDate)}
-              </div>
-            </div>
-
-            <div className="bg-gray-50 p-4 rounded-lg">
-              <label className="block text-sm font-medium text-gray-500 mb-1">
-                Sales Order No
-              </label>
-              <div className="text-sm font-semibold text-gray-700">
-                {salesOrderNos.join(', ')}
-              </div>
-            </div>
+               <InfoCard
+                         label="Challan Date"
+                     value= {convertDateFormat(formData.ChallanDate)}
+                     icon={<Calendar className="w-5 h-5 text-white" />}
+                       color="orange"
+                      />
+   <InfoCard
+                        label="Sales Order No"
+                    value=  {salesOrderNos.join(', ')}
+                    icon={<CalendarCheck2 className="w-5 h-5 text-white" />}
+                      color="purple"
+                     />
+             
           </div>
 
           <div className="mb-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  Party Information
-                </h3>
-
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-500">Party Name</span>
-                    <div className="font-medium text-gray-800">
-                      {formData.PartyName || 'N/A'}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-500">Contacts</span>
-                    <div>
-                      {formData.ContactName || 'N/A'}
-                      {formData.ContactNumber && `, Phone: ${formData.ContactNumber}`}
-                    </div>
-                  </div>
-
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-500">Address</span>
-                    <div>{formData.PresentAddress || 'N/A'}</div>
-                  </div>
-                </div>
-              </div>
-
+ {/* Party Information */} 
+    <PartyCard
+  data={{
+    partyName:formData.PartyName || 'N/A',
+    contactName: formData.ContactNumber || 'N/A',
+    address: formData.PresentAddress || 'N/A'
+  }}
+/>
                {formData.RetailerCode && (
-              <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                <h3 className="text-lg font-semibold text-gray-800 mb-3">
-                  Retailer Information
-                </h3>
-
-               
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-500">Retailer Name</span>
-                      <div className="font-medium text-gray-800">
-                        {formData.RetailerCode} - {formData.RetailerName}
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-500">Contacts</span>
-                      <div>
-                        {formData.RetailerContactPerson || 'N/A'}
-                        {formData.RetailerContactPhone &&
-                          `, Phone: ${formData.RetailerContactPhone}`}
-                      </div>
-                    </div>
-
-                    <div className="flex justify-between">
-                      <span className="font-semibold text-gray-500">Address</span>
-                      <div>{formData.RetailerAddress || 'N/A'}</div>
-                    </div>
-                  </div>
-                
-              </div>
+               <RetailerCard
+  data={{
+    partyName:formData.RetailerCode - formData.RetailerName|| 'N/A',
+    contactName:formData.RetailerContactPhone || 'N/A',
+    address: formData.RetailerAddress || 'N/A'
+  }}
+/>
             )}
             </div>
           </div>
@@ -539,9 +481,11 @@ console.log(response.data);
                             <td className="px-4 py-3 whitespace-nowrap  text-sm text-gray-700">
                               <input
                                 type="number"
-                                className="w-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent text-right"
-                                value={challanQty}
-                                onChange={(e)=>setChallanQty(e.target.value)}
+                                min="0"
+                                max={Math.min(item.AvailQty, item.OrderQty)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary1 focus:border-transparent text-right"
+                                value={item.ChallanQty}
+                                onChange={e => handleChallanQtyChange(e, item)}
                                 required
                               />
                             </td>

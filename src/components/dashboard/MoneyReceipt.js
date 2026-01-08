@@ -26,6 +26,11 @@ const MoneyReceipt = () => {
       width: '15%'
     },
     {
+      key: 'PartyName',
+      header: 'Party Name',
+      width: '15%'
+    },
+    {
       key: 'AmountReceived',
       header: 'Amount Received',
       width: '15%'

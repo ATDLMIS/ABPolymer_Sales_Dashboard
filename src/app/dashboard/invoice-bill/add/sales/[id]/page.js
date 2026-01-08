@@ -1,12 +1,16 @@
 "use client"
 import { useState, useEffect } from 'react'
-import { Save, Search, FileText, Calendar, User, MapPin, Package, AlertCircle, ShoppingCart } from 'lucide-react'
+import { Save, Search, FileText, Calendar, User, MapPin, Package, AlertCircle, ShoppingCart,Phone,PartyPopper } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Axios from '@/utils/axios'
 import getCurrentDate from '@/utils/getCurrentDate'
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas'
 import Loading from '@/components/Loading'
+import InfoCard from '@/components/Card/InfoCard'
+import PartyCard from '@/components/Card/PartyCard'
+import RetailerCard from '@/components/Card/RetailerCard'
+import BackButton from '@/components/BackButton/BackButton'
 
 const CreateInvoicePage = ({ params }) => {
   const { data: session } = useSession()
@@ -110,19 +114,7 @@ const CreateInvoicePage = ({ params }) => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Header Section */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-2">
-                <FileText className="w-8 h-8 text-primary1" />
-                Create Invoice
-              </h1>
-              <p className="text-gray-600 mt-1">Generate invoice from challan</p>
-            </div>
-            
-          </div>
-        </div>
+         <BackButton router={router} title="Create Invoice" />
 
         {/* Main Invoice Card */}
         <div className="bg-white rounded-xl shadow-lg overflow-hidden">
@@ -130,163 +122,64 @@ const CreateInvoicePage = ({ params }) => {
            
             {/* Invoice and Challan Numbers Grid */}
             <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8">
-              <div className="bg-gradient-to-br from-blue-50 to-blue-100 p-5 rounded-lg border border-blue-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-white" />
-                  </div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Challan No
-                  </label>
-                </div>
-                <div className="text-lg font-bold text-gray-900 ml-13">
-                  {challanData?.ChallanMaster.ChallanNo}
-                </div>
-              </div>
 
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 p-5 rounded-lg border border-purple-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-purple-600 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Challan Date
-                  </label>
-                </div>
-                <div className="text-lg font-bold text-gray-900 ml-13">
-                  {challanData?.ChallanMaster.ChallanDate}
-                </div>
-              </div>
+            <InfoCard
+           label="Challan No"
+       value={challanData?.ChallanMaster.ChallanNo}
+       icon={<FileText className="w-5 h-5 text-white" />}
+         color="blue"
+        />
 
-              <div className="bg-gradient-to-br from-green-50 to-green-100 p-5 rounded-lg border border-green-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-green-600 rounded-lg flex items-center justify-center">
-                    <ShoppingCart className="w-5 h-5 text-white" />
-                  </div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Sales Order
-                  </label>
-                </div>
-                <div className="text-lg font-bold text-gray-900 ml-13">
-                  {challanData?.ChallanMaster.SalesOrderNo}
-                </div>
-              </div>
+                  <InfoCard
+           label="Challan Date"
+       value={challanData?.ChallanMaster.ChallanDate}
+       icon={<FileText className="w-5 h-5 text-white" />}
+         color="purple"
+        />
 
-              <div className="bg-gradient-to-br from-indigo-50 to-indigo-100 p-5 rounded-lg border border-indigo-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-indigo-600 rounded-lg flex items-center justify-center">
-                    <FileText className="w-5 h-5 text-white" />
-                  </div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Invoice No
-                  </label>
-                </div>
-                <div className="text-lg font-bold text-gray-900 ml-13">
-                  {invoiceNo}
-                </div>
-              </div>
+               <InfoCard
+           label="Sales Order"
+       value={challanData?.ChallanMaster.SalesOrderNo}
+       icon={<FileText className="w-5 h-5 text-white" />}
+         color="green"
+        />
+             
+                  <InfoCard
+           label="Invoice No"
+       value={invoiceNo}
+       icon={<FileText className="w-5 h-5 text-white" />}
+         color="indigo"
+        />
 
-              <div className="bg-gradient-to-br from-orange-50 to-orange-100 p-5 rounded-lg border border-orange-200">
-                <div className="flex items-center gap-3 mb-2">
-                  <div className="w-10 h-10 bg-orange-600 rounded-lg flex items-center justify-center">
-                    <Calendar className="w-5 h-5 text-white" />
-                  </div>
-                  <label className="text-sm font-medium text-gray-600">
-                    Invoice Date
-                  </label>
-                </div>
-                <div className="text-lg font-bold text-gray-900 ml-13">
-                  {invoiceDate}
-                </div>
-              </div>
+              
+                  <InfoCard
+           label="Invoice Date"
+       value={invoiceDate}
+       icon={<FileText className="w-5 h-5 text-white" />}
+         color="orange"
+        />
             </div>
 
             {/* Party Information Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
               {/* Party Information */}
-              <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border border-slate-200">
-                <div className="flex items-center gap-3 mb-4 pb-3 border-b border-slate-300">
-                  <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
-                    <User className="w-5 h-5 text-white" />
-                  </div>
-                  <h3 className="text-lg font-bold text-gray-900">
-                    Party Information
-                  </h3>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Party Name
-                    </div>
-                    <div className="text-base font-semibold text-gray-900">
-                      {challanData?.ChallanMaster.PartyName || 'N/A'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                      Contact Person
-                    </div>
-                    <div className="text-base text-gray-700">
-                      {challanData?.ChallanMaster.ContactName || 'N/A'}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
-                      <MapPin className="w-3 h-3" />
-                      Address
-                    </div>
-                    <div className="text-base text-gray-700">
-                      {challanData?.ChallanMaster.PresentAddress || 'N/A'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-
+             
+    <PartyCard
+  data={{
+    partyName: challanData?.ChallanMaster.PartyName || 'N/A',
+    contactName: challanData?.ChallanMaster.ContactName || 'N/A',
+    address: challanData?.ChallanMaster.PresentAddress || 'N/A'
+  }}
+/>
               {/* Retailer Information */}
               {challanData?.ChallanMaster.RetailderName && (
-                <div className="bg-gradient-to-br from-emerald-50 to-emerald-100 rounded-xl p-6 border border-emerald-200">
-                  <div className="flex items-center gap-3 mb-4 pb-3 border-b border-emerald-300">
-                    <div className="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-                      <Package className="w-5 h-5 text-white" />
-                    </div>
-                    <h3 className="text-lg font-bold text-gray-900">
-                      Retailer Information
-                    </h3>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                        Retailer Name
-                      </div>
-                      <div className="text-base font-semibold text-gray-900">
-                        {challanData?.ChallanMaster.RetailderName || 'N/A'}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
-                        Contact Person
-                      </div>
-                      <div className="text-base text-gray-700">
-                        {challanData?.ChallanMaster.RetailerContactPerson || 'N/A'}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        Address
-                      </div>
-                      <div className="text-base text-gray-700">
-                        {challanData?.ChallanMaster.RetailerAddress || 'N/A'}
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                   <RetailerCard
+  data={{
+    partyName: challanData?.ChallanMaster.RetailderName || 'N/A',
+    contactName: challanData?.ChallanMaster.RetailerContactPerson || 'N/A',
+    address: challanData?.ChallanMaster.RetailerAddress || 'N/A'
+  }}
+/>
               )}
             </div>
 

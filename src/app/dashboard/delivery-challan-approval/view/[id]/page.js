@@ -1,16 +1,25 @@
 "use client"
 import {useState, useEffect} from 'react'
 import convertDateFormat from '@/utils/convertDateFormat';
-import Link from 'next/link';
-import Axios from '@/utils/axios';
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
+import { Printer, Download, Search, FileText, Calendar, User, MapPin, Package, Eye, Tractor, Phone,People, PersonStanding, TypeIcon, Calendar1 } from 'lucide-react'
+import Axios from '@/utils/axios';
+import BackButton from '@/components/BackButton/BackButton';
+import { useRouter } from 'next/navigation';
+import InfoCard from '@/components/Card/InfoCard';
+import { BsPeople } from 'react-icons/bs';
+import { PiVideoConferenceThin } from 'react-icons/pi';
+import { HiReceiptTax } from 'react-icons/hi';
+import RetailerCard from '@/components/Card/RetailerCard';
+import PartyCard from '@/components/Card/PartyCard';
+import Link from 'next/link';
 
 const Page = ({params}) => {
   const [state, setState] = useState({
     status: 'pending',
     data: null
   })
-console.log("Delivery Challan ",state.data);
+ const router = useRouter();
   const getData = async id => {
     try {
       const res = await Axios.get(`?action=get_ChallanOrderDetails&ChallanID=${id}`)
@@ -75,13 +84,10 @@ console.log("Delivery Challan ",state.data);
   const { ChallanMaster, ChallanDetails } = state.data;
   
   return (
-    <div className="container mx-auto px-4 py-8 max-w-6xl">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-800">Delivery Challan</h1>
-          <p className="text-gray-600 mt-1">View and print delivery challan details</p>
-        </div>
-        <div className="flex items-center gap-3">
+    <div className="container mx-auto px-4 py-6">
+      <div className="flex justify-between items-center mb-4">
+          <BackButton router={router} title="Details of Delivery Challan" />
+ <div className="flex items-center gap-3">
           <Link
             href={`/dashboard/delivery-challan/preview/sales/${params.id}`}
             className="px-5 py-2.5 bg-primary1 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 flex items-center gap-2"
@@ -93,121 +99,95 @@ console.log("Delivery Challan ",state.data);
             Preview
           </Link>
         </div>
-      </div>
+        </div>
 
       {/* Main Challan Container */}
       <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
         
         {/* Header with Company Info */}
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-6 border-b border-gray-200">
-          <div className="flex flex-col md:flex-row justify-between items-center mb-6">
-            <div>
-              <div className="flex items-center gap-3 mb-2">
-                <div className="w-10 h-10 bg-primary1 rounded-lg flex items-center justify-center">
-                  <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <h1 className="text-2xl font-bold text-gray-800">Delivery Challan</h1>
-              </div>
-              <p className="text-gray-600 text-sm">Asian AB Polymer Ltd.</p>
-            </div>
-            <div className="mt-4 md:mt-0 text-right">
-              <div className="text-lg font-bold text-primary1">{ChallanMaster.ChallanNo}</div>
-              <div className="text-gray-600 text-sm mt-1">
-                Date: {formatDateWithDashes(ChallanMaster.ChallanDate)}
-              </div>
-            </div>
-          </div>
+         
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
 
+                 <InfoCard
+                         label="Challan No"
+                     value={ChallanMaster.ChallanNo}
+                     icon={<FileText className="w-5 h-5 text-white" />}
+                       color="blue"
+                      />
+                 <InfoCard
+                        label="Challan Date"
+                    value={formatDateWithDashes(ChallanMaster.ChallanDate)}
+                    icon={<Calendar1 className="w-5 h-5 text-white" />}
+                      color="indigo"
+                     />
+             
+                           
+                               <InfoCard
+                        label="Hire Type"
+                    value={ChallanMaster.Own_Hire || 'N/A'}
+                    icon={<HiReceiptTax className="w-5 h-5 text-white" />}
+                      color="orange"
+                     />
+                               <InfoCard
+                        label="Vehicle Type"
+                    value={ChallanMaster.Own_Hire || 'N/A'}
+                    icon={<TypeIcon className="w-5 h-5 text-white" />}
+                      color="red"
+                     />
+                               <InfoCard
+                        label="Vehicle No"
+                    value={ChallanMaster.Vehicle_Number || 'N/A'}
+                    icon={<PiVideoConferenceThin className="w-5 h-5 text-white" />}
+                      color="orange"
+                     />
+                               <InfoCard
+                        label="Driver Name"
+                    value={ChallanMaster.DriverName || 'N/A'}
+                    icon={<BsPeople className="w-5 h-5 text-white" />}
+                      color="blue"
+                     />
+                               <InfoCard
+                        label="Driver Mobile"
+                    value={ChallanMaster.Driver_Number || 'N/A'}
+                    icon={<Phone className="w-5 h-5 text-white" />}
+                      color="purple"
+                     />
+                               <InfoCard
+                        label="Transport Name"
+                    value={ChallanMaster.HireAgentName || 'N/A'}
+                    icon={<Tractor className="w-5 h-5 text-white" />}
+                      color="blue"
+                     />
+            </div>
           {/* Challan Info Cards */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Dealer Information Card */}
-            <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-              <div className="flex items-center gap-2 mb-3">
-                <div className="w-2 h-4 bg-blue-500 rounded"></div>
-                <h3 className="font-semibold text-gray-700">Dealer Information</h3>
-              </div>
-              <div className="space-y-2 text-sm">
-                <div className="flex">
-                  <span className="font-medium text-gray-600 min-w-[120px]">Name:</span>
-                  <span className="text-gray-800">
-                    {ChallanMaster.PartyCode} - {ChallanMaster.PartyName}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="font-medium text-gray-600 min-w-[120px]">Contact:</span>
-                  <span className="text-gray-800">
-                    {ChallanMaster.ContactName || 'N/A'}, {ChallanMaster.ContactNumber || 'N/A'}
-                  </span>
-                </div>
-                <div className="flex">
-                  <span className="font-medium text-gray-600 min-w-[120px]">Address:</span>
-                  <span className="text-gray-800">{ChallanMaster.PermanentAddress || 'N/A'}</span>
-                </div>
-              </div>
-            </div>
+            {/* Party Information Card */}
+                      
+    <PartyCard
+  data={{
+    partyName:  ChallanMaster.PartyName,
+    contactName: ChallanMaster.ContactNumber || 'N/A',
+    address: ChallanMaster.PermanentAddress || 'N/A'
+  }}
+/>
 
             {/* Delivery Point Information Card */}
            {
             ChallanMaster.RetailerCode && (<>
-               <div className="bg-white rounded-lg p-4 border border-gray-200 shadow-sm">
-                 <div className="flex items-center gap-2 mb-3">
-                   <div className="w-2 h-4 bg-green-500 rounded"></div>
-                   <h3 className="font-semibold text-gray-700">Delivery Point</h3>
-                 </div>
-                 <div className="space-y-2 text-sm">
-                   <div className="flex">
-                     <span className="font-medium text-gray-600 min-w-[120px]">Retailer:</span>
-                     <span className="text-gray-800">
-                       {ChallanMaster.RetailerCode || 'N/A'} - {ChallanMaster.RetailerName || 'N/A'}
-                     </span>
-                   </div>
-                   <div className="flex">
-                     <span className="font-medium text-gray-600 min-w-[120px]">Contact:</span>
-                     <span className="text-gray-800">
-                       {ChallanMaster.ContactPersonName || 'N/A'}, {ChallanMaster.ContactPhone1 || 'N/A'}
-                     </span>
-                   </div>
-                   <div className="flex">
-                     <span className="font-medium text-gray-600 min-w-[120px]">Address:</span>
-                     <span className="text-gray-800">{ChallanMaster.Address || 'N/A'}</span>
-                   </div>
-                 </div>
-               </div>
+                <RetailerCard
+  data={{
+    partyName:ChallanMaster.RetailerName || 'N/A',
+    contactName:ChallanMaster.ContactPhone || 'N/A',
+    address: ChallanMaster.Address|| 'N/A'
+  }}
+/>
              </>)
            }
           </div>
         </div>
 
-        {/* Order and Delivery Information */}
-        <div className="p-6 border-b border-gray-200">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-500 mb-1">Vehicle Type</div>
-              <div className="text-lg font-semibold text-gray-800">{ChallanMaster.Own_Hire || 'N/A'}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-500 mb-1">Vehicle No</div>
-             <div className="text-lg font-semibold text-gray-800">{ChallanMaster.Vehicle_Number || 'N/A'}</div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-500 mb-1">Driver Details</div>
-                            <div className="text-sm text-gray-700">
-                <div className="mb-1"><span className="font-medium">Name:</span> {ChallanMaster.DriverName || 'N/A'}</div>
-                <div><span className="font-medium">Contact:</span> {ChallanMaster.Driver_Number || 'N/A'}</div>
-              </div>
-            </div>
-            <div className="bg-gray-50 rounded-lg p-4">
-              <div className="text-sm font-medium text-gray-500 mb-1">Transport Name</div>
-              <div className="text-sm text-gray-700">
-                <div><span className="font-medium">Name:</span> {ChallanMaster.HireAgentName || 'N/A'}</div>
-              </div>
-            </div>
-          </div>
-
-         
-        </div>
+     
 
         {/* Product Details Section */}
         <div className="p-6">
@@ -220,45 +200,36 @@ console.log("Delivery Challan ",state.data);
 
           <div className="overflow-x-auto rounded-lg border border-gray-200">
             <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                    SL
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                    Order No
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200">
-                    Product Name
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Quantity
-                  </th>
-                </tr>
-              </thead>
+              <thead className="bg-gradient-to-r from-gray-700 to-gray-800">
+                      <tr>
+                        <th className="px-4 py-4 text-left text-xs text-white  tracking-wider">
+                          SL
+                        </th>
+                        <th className="px-4 py-4 text-left text-xs text-white  tracking-wider">
+                          Order No
+                        </th>
+                        <th className="px-4 py-4 text-left text-xs text-white  tracking-wider">
+                          Product Name
+                        </th>
+                        <th className="px-4 py-4 text-right text-xs  text-white  tracking-wider">
+                          Quantity
+                        </th>
+                      </tr>
+                    </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {ChallanDetails.map((item, index) => (
                   <tr key={item.ChallanDetailID} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-800 font-medium border-r border-gray-200">
-                      <div className="flex items-center justify-center w-8 h-8 bg-blue-50 rounded-full text-blue-600">
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
                         {index + 1}
-                      </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 border-r border-gray-200">
-                      <span className="font-medium">{item.SalesOrderNo}</span>
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                    {item.SalesOrderNo}
                     </td>
-                    <td className="px-6 py-4 text-sm text-gray-700 border-r border-gray-200">
-                      <div>
-                        <div className="font-medium text-gray-800">{item.ProductName || item.ProductNameRepo}</div>
-                        {item.FinancialYear && (
-                          <div className="text-xs text-gray-500 mt-1">{item.FinancialYear}</div>
-                        )}
-                      </div>
+                    <td className="px-4 py-4 text-sm font-medium text-gray-900">
+                      {item.ProductName || item.ProductNameRepo}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-green-100 text-green-800 border border-green-200">
+                    <td className="text-right px-4 py-4 text-sm font-medium text-gray-900">
                         {formatAmountWithCommas(Number(item.ChallanQty))}
-                      </div>
                     </td>
                   </tr>
                 ))}

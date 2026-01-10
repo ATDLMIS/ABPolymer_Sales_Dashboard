@@ -378,16 +378,16 @@ const router = useRouter();
             <div className="grid grid-cols-3 gap-8 mt-16 text-center text-sm">
               <div className="border-t-2 border-black pt-2">
                 <p className="font-semibold">Prepared By</p>
-                <p >{state.data.InvoiceMaster.AuthorizedUserName || 'N/A' }</p>
+                <p >{state.data.InvoiceMaster.PreparedUserName || 'N/A' }</p>
                   
               </div>
               <div className="border-t-2 border-black pt-2">
                 <p className="font-semibold">Authorized By</p>
-                <p >{state.data.InvoiceMaster.AuthorizedUserName || 'N/A' }</p>
+                {/* <p >{state.data.InvoiceMaster.AuthorizedUserName || 'N/A' }</p> */}
               </div>
               <div className="border-t-2 border-black pt-2">
                 <p className="font-semibold">Approved By</p>
-                <p >{state.data.InvoiceMaster.ApprovedUserName || 'N/A'}</p>
+                {/* <p >{state.data.InvoiceMaster.ApprovedUserName || 'N/A'}</p> */}
               </div>
             </div>
        

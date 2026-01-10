@@ -4,13 +4,15 @@ import convertDateFormat from '@/utils/convertDateFormat';
 import formatAmountWithCommas from '@/utils/formatAmountWithCommas';
 import numberToWords from '@/utils/numberToWords';
 import Loading from '@/components/Loading';
+import BackButton from '@/components/BackButton/BackButton';
+import { useRouter } from 'next/navigation';
 process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
 
 const SalesReceivedNote = ({ id }) => {
   const receiptData = useGetData(
     `?action=get_order&SalesOrderID=${id}`
   );
-
+const router=useRouter();
   const handlePrint = () => {
     const printContent = document.getElementById("print-area");
 
@@ -118,6 +120,20 @@ const SalesReceivedNote = ({ id }) => {
 
   return (
     <div>
+       <div className="no-print flex justify-between items-center">
+                  <BackButton router={router} />
+                   <div className="flex justify-end items-center mb-5">
+              <button 
+                onClick={handlePrint} 
+                className="bg-primary1 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+                </svg>
+                Print
+              </button>
+            </div>
+                </div>
       <div
         id="print-area"
         className="p-8 bg-white text-black w-full max-w-6xl mx-auto border border-gray-300"
@@ -129,7 +145,7 @@ const SalesReceivedNote = ({ id }) => {
                   <img 
                     src="/images/logo.png" 
                     alt="Asian AB Polymer" 
-                    className="w-auto h-16 mb-2"
+                    className="w-32 h-16 mb-2"
                   />
                 </div>
                 <div className="text-center">
@@ -140,8 +156,8 @@ const SalesReceivedNote = ({ id }) => {
                   <p className="text-xs">E-mail: saurav@asianabpolymer.com.bd</p>
                 </div>
                 <div className=" ">
-                  <div className="border border-black px-4 py-2 inline-block">
-                    <p className="font-semibold">Duplicate Copy</p>
+                  <div className="border border-black px-4 py-2 inline-block rounded-md">
+                     <p className="font-semibold">Orginal Copy</p>
                   </div>
                 </div>
              
@@ -334,17 +350,6 @@ const SalesReceivedNote = ({ id }) => {
         </div>
       </div>
 
-      <div className="flex justify-end items-center mt-2 mr-3">
-        <button 
-          onClick={handlePrint} 
-          className="bg-primary1 text-white font-medium px-6 py-2 rounded-lg transition-colors duration-200 flex items-center gap-2"
-        >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
-          </svg>
-          Print
-        </button>
-      </div>
     </div>
   );
 };

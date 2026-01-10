@@ -12,6 +12,7 @@ const ChallanPendingList = () => {
   const router = useRouter();
     const {data:season}=useSession();
    const userID=season?.user.id;
+   console.log("User ID",userID); 
   const salesorderList = useGetData(
     `?action=get_ChallanApproval&UserID=${userID}`
   );
@@ -37,13 +38,18 @@ const ChallanPendingList = () => {
     },
     {
       key: 'ChallanDate',
-      header: 'Date',
+      header: 'Challan Date',
       width: '8%',
       render: (row) => (
         <div className="text-xs whitespace-nowrap">
           {formatDate(row.ChallanDate)}
         </div>
       )
+    },
+     {
+      key: 'TripNo',
+      header: 'Trip No',
+      width: '15%'
     },
     {
       key: 'PartyName',

@@ -31,6 +31,11 @@ const ChallanCompleteList = () => {
       header: 'Challan Date',
       width: '15%'
     },
+    {
+      key: 'TripNo',
+      header: 'Trip No',
+      width: '15%'
+    },
     // {
     //   key:  type === 'speciman'
     //                       ? 'SpecimenUserName'

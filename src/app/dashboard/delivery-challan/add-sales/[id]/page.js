@@ -424,6 +424,7 @@ console.log(response.data);
 />
                {formData.RetailerCode && (
                <RetailerCard
+                title={"Retailer Information"}
   data={{
     partyName:formData.RetailerCode - formData.RetailerName|| 'N/A',
     contactName:formData.RetailerContactPhone || 'N/A',

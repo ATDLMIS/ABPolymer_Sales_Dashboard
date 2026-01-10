@@ -90,8 +90,8 @@ const ChallanSalesNote = ({id,router}) => {
                   <p className="text-xs">E-mail: saurav@asianabpolymer.com.bd</p>
                 </div>
                 <div className=" ">
-                  <div className="border border-black px-4 py-2 inline-block">
-                    <p className="font-semibold">Duplicate Copy</p>
+                  <div className="border border-black px-4 py-2 inline-block rounded-md">
+                 <p className="font-semibold">Orginal Copy</p>
                   </div>
                 </div>
              

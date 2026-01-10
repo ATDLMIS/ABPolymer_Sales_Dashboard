@@ -7,7 +7,6 @@ const PartyCard = ({
   title = 'Party Information',
   data,
 }) => {
-  console.log("Challan Data",data)
   return (
     <div className="bg-gradient-to-br from-slate-50 to-slate-100 rounded-xl p-6 border border-slate-200">
       {/* Header */}

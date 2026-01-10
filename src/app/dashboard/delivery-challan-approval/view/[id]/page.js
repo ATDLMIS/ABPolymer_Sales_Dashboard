@@ -9,10 +9,11 @@ import { useRouter } from 'next/navigation';
 import InfoCard from '@/components/Card/InfoCard';
 import { BsPeople } from 'react-icons/bs';
 import { PiVideoConferenceThin } from 'react-icons/pi';
-import { HiReceiptTax } from 'react-icons/hi';
+import { HiReceiptTax, HiStatusOnline } from 'react-icons/hi';
 import RetailerCard from '@/components/Card/RetailerCard';
 import PartyCard from '@/components/Card/PartyCard';
 import Link from 'next/link';
+import App from 'next/app';
 
 const Page = ({params}) => {
   const [state, setState] = useState({
@@ -130,10 +131,10 @@ const Page = ({params}) => {
                       color="orange"
                      />
                                <InfoCard
-                        label="Vehicle Type"
-                    value={ChallanMaster.Own_Hire || 'N/A'}
-                    icon={<TypeIcon className="w-5 h-5 text-white" />}
-                      color="red"
+                        label="Status"
+                    value={ChallanMaster.StatusName || 'N/A'}
+                    icon={<HiStatusOnline className="w-5 h-5 text-white" />}
+                      color="green"
                      />
                                <InfoCard
                         label="Vehicle No"
@@ -161,7 +162,7 @@ const Page = ({params}) => {
                      />
             </div>
           {/* Challan Info Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Party Information Card */}
                       
     <PartyCard
@@ -176,6 +177,7 @@ const Page = ({params}) => {
            {
             ChallanMaster.RetailerCode && (<>
                 <RetailerCard
+  title='Retailer Information'
   data={{
     partyName:ChallanMaster.RetailerName || 'N/A',
     contactName:ChallanMaster.ContactPhone || 'N/A',
@@ -184,6 +186,19 @@ const Page = ({params}) => {
 />
              </>)
            }
+            {
+       ChallanMaster.CheckedComments && (
+        <RetailerCard
+        title='Approval Details'
+  data={{
+     ApprovedBy:ChallanMaster.ApprovedUserName || 'N/A',
+   Designation: ChallanMaster.ApprovedDesignation || 'N/A',
+    ApprovalComments:  ChallanMaster.CheckedComments || 'No comments provided'
+  }}
+/>
+       
+        )
+       }
           </div>
         </div>
 
@@ -238,23 +253,9 @@ const Page = ({params}) => {
           </div>
         </div>
 
-       
+     
       </div>
-  <div className="grid grid-cols-3 gap-8 mt-16 text-center text-sm">
-              <div className="border-t-2 border-black pt-2">
-                <p className="font-semibold">Prepared By</p>
-                <p >{state.data.ChallanMaster.SalesOrderUserName }</p>
-              </div>
-              <div className="border-t-2 border-black pt-2">
-                <p className="font-semibold">Verified By</p>
-                <p >{state.data.ChallanMaster.AuthorizedUserName }</p>
-              </div>
-              <div className="border-t-2 border-black pt-2">
-                <p className="font-semibold">Authorized By</p>
-                <p >{state.data.ChallanMaster.ApprovedUserName }</p>
-              </div>
-            </div>
-    
+     
     </div>
   )
 }

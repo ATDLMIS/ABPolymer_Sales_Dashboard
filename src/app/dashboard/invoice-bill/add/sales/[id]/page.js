@@ -19,8 +19,6 @@ const CreateInvoicePage = ({ params }) => {
   const [invoiceNo, setInvoiceNo] = useState('')
   const [challanData, setChallanData] = useState(null)
   const [invoiceDate, setInvoiceDate] = useState('')
-  const [searchTerm, setSearchTerm] = useState('')
-
   const createInvoiceId = async () => {
     try {
       const res = await Axios.post('?action=generate_new_invoice_number')
@@ -174,6 +172,7 @@ const CreateInvoicePage = ({ params }) => {
               {/* Retailer Information */}
               {challanData?.ChallanMaster.RetailderName && (
                    <RetailerCard
+                    title={"Retailer Information"}
   data={{
     partyName: challanData?.ChallanMaster.RetailderName || 'N/A',
     contactName: challanData?.ChallanMaster.RetailerContactPerson || 'N/A',

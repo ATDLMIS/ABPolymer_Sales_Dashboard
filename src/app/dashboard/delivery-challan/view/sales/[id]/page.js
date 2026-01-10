@@ -9,7 +9,7 @@ import { useRouter } from 'next/navigation';
 import InfoCard from '@/components/Card/InfoCard';
 import { BsPeople } from 'react-icons/bs';
 import { PiVideoConferenceThin } from 'react-icons/pi';
-import { HiReceiptTax } from 'react-icons/hi';
+import { HiReceiptTax, HiStatusOnline } from 'react-icons/hi';
 import RetailerCard from '@/components/Card/RetailerCard';
 import PartyCard from '@/components/Card/PartyCard';
 import Link from 'next/link';
@@ -115,12 +115,12 @@ const Page = ({params}) => {
                     icon={<HiReceiptTax className="w-5 h-5 text-white" />}
                       color="orange"
                      />
-                               <InfoCard
-                        label="Vehicle Type"
-                    value={ChallanMaster.Own_Hire || 'N/A'}
-                    icon={<TypeIcon className="w-5 h-5 text-white" />}
-                      color="red"
-                     />
+                                 <InfoCard
+                                                       label="Status"
+                                                   value={ChallanMaster.StatusName || 'N/A'}
+                                                   icon={<HiStatusOnline className="w-5 h-5 text-white" />}
+                                                     color="green"
+                                                    />
                                <InfoCard
                         label="Vehicle No"
                     value={ChallanMaster.Vehicle_Number || 'N/A'}
@@ -162,6 +162,7 @@ const Page = ({params}) => {
            {
             ChallanMaster.RetailerCode && (<>
                 <RetailerCard
+                 title={"Retailer Information"}
   data={{
     partyName:ChallanMaster.RetailerName || 'N/A',
     contactName:ChallanMaster.ContactPhone || 'N/A',
@@ -226,20 +227,6 @@ const Page = ({params}) => {
 
        
       </div>
-  <div className="grid grid-cols-3 gap-8 mt-16 text-center text-sm">
-              <div className="border-t-2 border-black pt-2">
-                <p className="font-semibold">Prepared By</p>
-                <p >{state.data.ChallanMaster.SalesOrderUserName }</p>
-              </div>
-              <div className="border-t-2 border-black pt-2">
-                <p className="font-semibold">Verified By</p>
-                <p >{state.data.ChallanMaster.AuthorizedUserName }</p>
-              </div>
-              <div className="border-t-2 border-black pt-2">
-                <p className="font-semibold">Authorized By</p>
-                <p >{state.data.ChallanMaster.ApprovedUserName }</p>
-              </div>
-            </div>
     
     </div>
   )

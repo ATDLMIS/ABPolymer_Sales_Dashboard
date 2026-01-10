@@ -130,6 +130,7 @@ const InvoicePage = ({ params }) => {
               {/* Retailer Information */}
               {state.data.InvoiceMaster.RetailderName && (
                    <RetailerCard
+                    title={"Retailer Information"}
   data={{
     partyName:state.data.InvoiceMaster.RetailderName || 'N/A',
     contactName:state.data.InvoiceMaster.RetailerContactPerson || 'N/A',
